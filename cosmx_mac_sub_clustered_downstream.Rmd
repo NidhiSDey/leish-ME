@@ -1,0 +1,82 @@
+```{r setup, include=FALSE}
+library(Seurat)
+library(dplyr)
+library(sqldf)
+library(ggplot2)
+library(patchwork)
+library(RColorBrewer)
+library(ggpubr)
+
+library(spatstat)
+library(gplots)
+library(corrplot)
+library(stringr)
+
+library(VennDiagram)
+library(grid)#for printing PDFs off finder makrer
+DiscretePalette(40, palette = "polychrome")
+library(reshape2)
+library(ggplot2)
+options(ggrepel.max.overlaps = Inf)
+#PLEASE ADD YOUR WORKING PATH HERE
+study_path<-"your_path_here/"
+#CREATE A FOLDER WITHIN 'study_path' as 'R'. ALL ANALYSIS WILL BE STORED HERE
+save_path<-paste0(study_path,"R/")
+```
+
+
+```{r readRDS}
+#myeloid only sub-clustered object with no mix
+cosmx_myeloid <- readRDS(paste0(study_path, "cosmx_myeloid_clusterf.Rds"))
+```
+
+```{r plots}
+DefaultAssay(cosmx_myeloid)<- "SCT"
+cosmx_myeloid$morpho <- Idents(cosmx_myeloid)
+levels(cosmx_myeloid)
+
+ident_colours = c("inf_mac2_CHI3L1_mac"= "dodgerblue2","inf_mac2_CCL18_mac"= "#E31A1C","moDC2"="darkorange4","inf_mac1"="green4","pDC"= "#0000CD","cDC2"= "purple","moDC1"="#FF7F00" ,"res_mac"= "brown","DC3"= "gold1","neutrophil" = "#FA8072", "DC1"= "darkturquoise","moDC3"="#00BFFF", "mast"="#00FF00")
+
+my_cols2 <- ident_colours[order(as.character(names(ident_colours)))]
+
+pdf(paste0(save_path, "FIGURE2c_cosmx_myeloid_sub_clustered_DimPlot.pdf"))
+  DimPlot(cosmx_myeloid, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE, cols = my_cols2) + NoLegend()
+dev.off()
+
+#Ordering idents for dot plot
+cosmx_myeloid@active.ident <- factor(my_seurat1@active.ident, 
+                                    levels=c("res_mac",
+                                             "inf_mac1",
+                                             "inf_mac2_CHI3L1_mac", 
+                                             "inf_mac2_CCL18_mac",
+                                             "moDC1",
+                                             "moDC2",
+                                             "moDC3",
+                                             "DC1",
+                                             "cDC2",
+                                              "DC3",
+                                             "neutrophil",  
+                                             "pDC",
+                                             "mast"))
+
+pdf(paste0(save_path, "FIGURE2D_cosmx_myeloid_signature.pdf"),14, 8)
+    DotPlot(object = cosmx_myeloid, features = unique(c("C1QC", "C1QB","CD68", "LYZ","SELENOP","SLC40A1","CD163", "CXCL12","CXCL9","IL1B","CXCL10", "CHI3L1",	"PTGDS",	"GPNMB","CCL18","MT2A","CXCL3", "CXCL8", "ITGAM", "DUSP1", "CLEC12A", "CLEC5A","CLEC4E", "MARCO", "NR1H3","CD80","ITGAX","CCL8","CLEC7A","CSF1R", "CLEC10A","CIITA","CD40", "CCR7", "LAMP3", "CD274", "IDO1", "PDCD1LG2", "CD83", "CD86", "CCL19", "SPP1","CLEC5A","KRT6A","KRT6C", "MIF", "PLAC8","S100B","HSP90B1","JCHAIN", "TPSB2", "TPSAB1")))+ 
+    RotatedAxis() + 
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank()) + 
+    NoLegend() 
+dev.off()
+
+AverageExpression(cosmx_myeloid, features = c("IDO1", "CD274", "PDCD1"))
+
+pdf(paste0(save_path, "EXT_DATA_FIGURE4i_cosmx_myeloid_vlnplot_ido1_clusterf.pdf"),5,4)
+  VlnPlot(cosmx_myeloid, features = "IDO1", ncol=1, pt.size = 0.1, assay = "SCT", cols = my_cols2,raster = FALSE) + 
+  NoLegend() + 
+  scale_x_discrete(limit=c("DC3",	"moDC2",	"cDC2",	"inf_mac1",	"DC1")) 
+dev.off()
+
+pdf(paste0(save_path, "EXT_DATA_FIGURE4j_cosmx_myeloid_vlnplot_pdl1_clusterf.pdf"),5,4)
+  VlnPlot(cosmx_myeloid, features = "CD274", ncol=1, pt.size = 0.1, assay = "SCT", cols = my_cols2,raster = FALSE) + 
+  NoLegend() + 
+  scale_x_discrete(limit=c("DC3",	"moDC3",	"DC1",	"inf_mac2_CHI3L1_mac", "moDC1")) 
+dev.off()
+```

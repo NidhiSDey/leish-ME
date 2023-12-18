@@ -1,0 +1,551 @@
+---
+title: "giotto_SL2"
+author: "Nidhi"
+date: "2022-09-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(reshape2)
+##########
+#No Set up - following chunks rely on the config file - giotto_sl2_config.Rmd for object creation/stats
+#Scenario#2 - Run the downstream analysis based on IDO1 and PDL1 expressed only by myeloid cells and their neighbours
+##########
+#PLEASE ADD YOUR WORKING PATH HERE
+study_path<-"your_path_here/"
+save_path <- save_path <-  paste0(study_path, "R/")
+```
+
+
+The following chunk runs a downstream analysisby labelling myeloid cells as either double positive, pdl1_hi or ido1_hi and then looks at all neighbours
+
+```{r to look at neighbour combinations of ido1 pdl1 and double pos myeloid cells}
+### step 1. subset out mix
+#cell metadata from gem
+cell_metadata <- pDataDT(gem)
+#get ids that are not in mix cluster
+subset_cell_IDs = cell_metadata[!(clusterf %in% "mix")]$cell_ID
+#subset out mix
+gem_nomix <-subsetGiotto(gem, cell_ids = subset_cell_IDs) 
+
+### step 2. subset myeloid cells
+#cell metadata from gem_nomix
+nomix_cell_metadata <- pDataDT(gem_nomix)
+#get ids that are myeloid cells
+myeloid_cell_IDs = nomix_cell_metadata[!(clusterf %in% c("B-cell", "endothelial", "fib1",  "fib2",  "fib3",  "fib4",  "fibroblast1_igg", "fibroblast3_igg", "ker_1", "ker_2", "ker_3", "NK", "NK_igg","plasmablast", "plasmablast_cycl", "T_CD4_mem", "T_CD4_naive", "T_CD8_mem", "T_CD8_naive",  "Treg"))]$cell_ID
+#subset myeloid cells
+gem_myeloid <-subsetGiotto(gem_nomix, cell_ids = myeloid_cell_IDs) 
+
+###step3 annotate ido1 and pdl1 pos cells in myeloid gem
+#violin plot to look at ido1 pdl1 expression
+violinPlot(gem_myeloid, feats =  c("IDO1", "CD274", "PDCD1"), cluster_column = 'clusterf')
+
+myeloid_exp_matrix <-as.matrix(gem_myeloid@expression[["rna"]][["normalized"]])
+
+#fetch ido1 and cd274 values
+ido1_myvalues<-as.data.frame(myeloid_exp_matrix["IDO1", ])
+cd274_myvalues<-as.data.frame(myeloid_exp_matrix[c("CD274"), ])
+
+#setting colnames as ido1 and pdl1
+colnames(ido1_myvalues)<-"IDO1"
+colnames(cd274_myvalues)<-"CD274"
+
+#scatterplot with ido1 and pdl1 values
+pdf(paste0(my_working_dir, "niche_plots/Fig4a_pdl1_ido1_overall_scatter.pdf"), height = 5, width=5)
+X<-ido1_myvalues$IDO1
+Y<-cd274_myvalues$CD274
+#length(X) = length(Y) 
+plot(X, Y, main = "",
+     xlab = "IDO1", ylab = "PDL1",
+     pch = '.', frame = FALSE, cex= 0.5)
+abline(v=3, col="red")
+abline(h=3, col="red")
+dev.off()
+
+#get ido1 and pdl1 cell ids
+ido1_cd274_values <- as.data.frame(t(myeloid_exp_matrix[c("IDO1", "CD274"),]))
+#colnames(ido1_cd274_values)<- c("IDO1", "CD274")
+ido1_cd274_doublepos <- ido1_cd274_values%>% 
+    filter(ido1_cd274_values$IDO1 > 3 & ido1_cd274_values$CD274 >3)
+ido1_high_values= ido1_cd274_values%>% 
+    filter(ido1_cd274_values$IDO1 > 3, ido1_cd274_values$CD274 <3)
+cd274_high_values= ido1_cd274_values%>% 
+    filter(ido1_cd274_values$CD274 > 3, ido1_cd274_values$IDO1 <3)
+# #ido1_pdl1_low= ido1_cd274_values%>% 
+#     filter(ido1_cd274_values$CD274 <= 1 & ido1_cd274_values$CD274 > 0 , ido1_cd274_values$IDO1 <= 1 & #ido1_cd274_values$IDO1 > 0)
+#fetch cell_ids
+ido1pdl1_cellid<- rownames(ido1_cd274_doublepos)
+ido1_cellid<- rownames(ido1_high_values)
+pdl1_cellid <-rownames(cd274_high_values)
+#metadata for gem
+#gem_nomix_cell_metadata = pDataDT(gem_nomix)
+```
+
+
+############################################################################################################################
+###Step 3: Create columns for Ido1pdl1_double pos, Ido1pos, pdl1 pos, rest of the spots
+```{r Step3}
+
+
+lstNewColumnNames <- c("ido1pdl1", "ido1", "pdl1")
+lstFormattedNewColumnValues <- c("IDO1_PDL1_doublepos","IDO1_high_PDL1_low","PDL1_high_IDO1_low")
+lstCheckpoint<-list()
+
+all_cell_ids <- gem_nomix@cell_metadata[['rna']]$cell_ID
+all_cell_metadata <- pDataDT(gem_nomix)
+
+#create these columns from lstNewColumnNames
+at_index=1
+for(item in lstNewColumnNames){
+  cell_ids_to_update <- eval(parse(text = paste0(item,"_cellid")))
+  rest_of_the_cell_IDs<-setdiff(all_cell_ids, cell_ids_to_update)
+  rest_of_the_cells<-subset(all_cell_metadata, (cell_ID %in% rest_of_the_cell_IDs), select=c(cell_ID, clusterf))
+  #changing colnames to new proposed annotation column
+  colnames(rest_of_the_cells)<-c('cell_ID', item)
+  #add new data frame for rbind later
+  current_item_df<-data.frame(cell_ids_to_update)
+  colnames(current_item_df)<-'cell_ID'
+  current_item_df[[item]]<-lstFormattedNewColumnValues[[at_index]]
+  
+  #add new meta data 
+  new_meta_for_gem_nomix <- rbind(current_item_df, rest_of_the_cells)
+  #adding cell metadata back to gem
+  gem_nomix = addCellMetadata(gem_nomix,
+                          new_metadata = new_meta_for_gem_nomix,
+                          by_column = T,
+                          column_cell_ID = 'cell_ID')
+  #count & prep current_df for next step
+  colnames(current_item_df)<-c('cell_ID', 'checkpoint')
+  lstCheckpoint[[item]]<-current_item_df
+  at_index<-at_index+1
+}
+#create "checkpoint" df with all checkpoint values under one column name
+checkpoint_df <- bind_rows(lstCheckpoint)
+rest_of_the_cell_IDs<-setdiff(all_cell_ids, checkpoint_df$cell_ID)
+rest_of_the_cells<-subset(all_cell_metadata, (cell_ID %in% rest_of_the_cell_IDs), select=c(cell_ID, clusterf))
+#changing colnames to new proposed annotation column
+colnames(rest_of_the_cells)<-c('cell_ID', 'checkpoint')
+
+#add new meta data 
+new_meta_for_gem_nomix <- rbind(checkpoint_df, rest_of_the_cells)
+#adding cell metadata back to gem
+gem_nomix = addCellMetadata(gem_nomix,
+                        new_metadata = new_meta_for_gem_nomix,
+                        by_column = T,
+                        column_cell_ID = 'cell_ID')
+
+
+##Fig4b
+subset_cell_IDs = gem_nomix_metadata[patient_id %in% "P3"]$cell_ID
+P3 = subsetGiotto(gem_nomix, cell_ids = subset_cell_IDs)
+
+
+spatPlot2D(gobject = P3, cell_color = 'checkpoint',point_size = 1.5, select_cell_groups = c("PDL1_high_IDO1_low", "IDO1_PDL1_doublepos", "IDO1_high_PDL1_low"), cell_color_code= c("PDL1_high_IDO1_low"="#FFA500", "IDO1_high_PDL1_low"= "#6495ED", "IDO1_PDL1_doublepos"= "#FF1493"), show_legend = TRUE,point_shape = c("border"),save_param = list(save_name = 'Fig4b_P3_ido1_pdl1_myeloid_only.pdf', save_folder = 'niche_plots/',save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 8))
+
+
+```
+####################################################################################################################
+#Ext Fig 6a/b/ + Main Figure 4c
+The following is a sanity check. There should be no cells that aren't myeloid and labelled either as double positive, pdl1_high or ido1_high
+```{r cell types in ido1 pdl1 myeloid cells}
+
+all_cell_metadata <- pDataDT(gem_nomix)
+#create table to check cell types in ido1, pdl1 and double positive cells
+table4<- table(all_cell_metadata$clusterf, all_cell_metadata$checkpoint)
+table4
+##write csv to check cell types in excel and graphpad
+write.csv(table4, paste0(save_path, "celltypes_in_mye_ido1_pdl1cells.csv"))
+
+
+#create table to check percentage of ido1pdl1 cells per cell type in ido1, pdl1 and double positive cells
+table6<-prop.table(table(all_cell_metadata$clusterf, all_cell_metadata$checkpoint), margin = 1)
+
+#write csv to check in excel or graphpad
+write.csv(table6, paste0(save_path, "prc_celltypes_in_mye_ido1pdl1cells.csv"))
+
+
+```
+### Step 4 (following on from the chunk above #Ext Fig 6a/b/ + Main Figure 4c: plot network stats and create network and assign neighbours
+```{r Step4}
+#Ext_Data_Fig_6c-d
+plotStatDelaunayNetwork(gobject = gem_nomix, maximum_distance = 400, save_plot = T, save_param = list(save_name = 'Ext_Data_Fig_6c-d_dealunay_network_stats.pdf', save_folder = 'niche_plots/',save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 7))
+# since k=6 has most near neighburs closer than 0.5 and k=6 is the highest representation
+gem_nomix <- createSpatialNetwork(gobject = gem_nomix, method = 'kNN', k = 6, name = 'spatial_network')
+gem_nomix <- createSpatialNetwork(gobject = gem_nomix, method = 'kNN', k = 4, name = 'nearest_spatial_network')
+
+
+# ##create interaction maps for ido1 pdl1 double pos cells
+# ido1_pdl1_interaction_map<-annotateSpatialNetwork(
+#   gem_nomix,
+#   spatial_network_name = "nearest_spatial_network",
+#   cluster_column = "ido1pdl1",
+#   create_full_network = F
+# )
+# ##create interaction maps for ido1 pos cells
+# ido1_interaction_map<-annotateSpatialNetwork(
+#   gem_nomix,
+#   spatial_network_name = "nearest_spatial_network",
+#   cluster_column = "ido1",
+#   create_full_network = F
+# )
+# ##create interaction maps for pdl1 pos cells
+# pdl1_interaction_map<-annotateSpatialNetwork(
+#   gem_nomix,
+#   spatial_network_name = "nearest_spatial_network",
+#   cluster_column = "pdl1",
+#   create_full_network = F
+# )
+
+##create interaction maps for checkpoint cells
+checkpoint_interaction_map<-annotateSpatialNetwork(
+  gem_nomix,
+  spatial_network_name = "nearest_spatial_network",
+  cluster_column = "checkpoint",
+  create_full_network = F
+)
+
+#### to create spatial plots with P3 as representative patient
+## first subset P3
+gem_nomix_metadata <- pDataDT(gem_nomix)
+subset_cell_IDs = gem_nomix_metadata[patient_id %in% "P3"]$cell_ID
+P3 = subsetGiotto(gem_nomix, cell_ids = subset_cell_IDs)
+
+# #find ido1 neighbours in P3 with a network of k=4
+ido1_near_neighbours<-findNetworkNeighbors(
+  P3,
+  "nearest_spatial_network",
+  source_cell_ids = ido1_cellid,
+  name = "ido1_neighbour")
+
+#find pdl1 neighbours in P3 with a network of k=4
+pdl1_near_neighbours<-findNetworkNeighbors(
+  P3,
+  "nearest_spatial_network",
+  source_cell_ids = pdl1_cellid,
+  name = "pdl1_neighbour")
+# 
+#find ido1pdl1 neighbours in P3 with a network of k=4
+ido1pdl1_near_neighbours<-findNetworkNeighbors(
+  P3,
+  "nearest_spatial_network",
+  source_cell_ids = ido1pdl1_cellid,
+  name = "ido1pdl1_neighbour")
+
+
+#add both metadata back to P3
+P3 = addCellMetadata(P3,
+                        new_metadata = ido1_near_neighbours,
+                        by_column = T,
+                        column_cell_ID = 'cell_ID')
+P3 = addCellMetadata(P3,
+                        new_metadata = pdl1_near_neighbours,
+                        by_column = T,
+                        column_cell_ID = 'cell_ID')
+
+P3 = addCellMetadata(P3,
+                        new_metadata = ido1pdl1_near_neighbours,
+                        by_column = T,
+                        column_cell_ID = 'cell_ID')
+#cell_metadata = pDataDT(gem)
+#cell_metadata$ido1_neighbour[is.na(cell_metadata$ido1_neighbour)] <- "non_member"
+
+#gem = addCellMetadata(gem,
+#                         new_metadata = cell_metadata,
+#                         by_column = T,
+#                         column_cell_ID = 'cell_ID')
+# 
+# subset_cell_IDs = cell_metadata[patient_id %in% "P3"]$cell_ID
+# P3 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
+
+#plot neighbours onto P3
+#Ext_Data_Fig6e-f and Fig.4f
+spatPlot2D(gobject = P3, cell_color = 'ido1_neighbour',point_size = 1.5, select_cell_groups = c("both", "neighbor", "others", "source"), cell_color_code= c("both"="#E31A1C", "others"= "#D9D9D9", "neighbor"= "green", "source" = "black"), show_legend = TRUE,point_shape = c("border"),save_param = list(save_name = 'Ext_Data_Fig6e_P3_mye_ido1_k_4_neighbour.pdf', save_folder = 'niche_plots/',save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 7))
+
+spatPlot2D(gobject = P3, cell_color = 'pdl1_neighbour',point_size = 1.0, select_cell_groups = c("both", "neighbor", "others", "source"), cell_color_code= c("both"="#E31A1C", "others"= "#D9D9D9", "neighbor"= "green", "source" = "black"), show_legend = TRUE,point_shape = c("border"),save_param = list(save_name = 'Ext_Data_Fig6f_P3_mye_pdl1_k_4_neighbour.pdf', save_folder = 'niche_plots/',save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 7))
+
+spatPlot2D(gobject = P3, cell_color = 'ido1pdl1_neighbour',point_size = 1.0, select_cell_groups = c("both", "neighbor", "others", "source"), cell_color_code= c("both"="#E31A1C", "others"= "#D9D9D9", "neighbor"= "green", "source" = "black"), show_legend = TRUE,point_shape = c("border"),save_param = list(save_name = 'Fig_4e_P3_mye_ido1pdl1_k_4_neighbour.pdf', save_folder = 'niche_plots/',save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 7))
+
+
+##################################################################################################################
+##Data for UpsetR plots Fig. 4f and Ext Data Fig 6 g-h
+## for checkpoint
+checkpoint_interaction_map<-checkpoint_interaction_map[,c("from","from_cell_type","to_cell_type")]
+pdl1checkpoint_data <- checkpoint_interaction_map[checkpoint_interaction_map$from_cell_type=="PDL1_high_IDO1_low",]
+ido1checkpoint_data <- checkpoint_interaction_map[checkpoint_interaction_map$from_cell_type=="IDO1_high_PDL1_low",]
+ido1pdl1checkpoint_data <- checkpoint_interaction_map[checkpoint_interaction_map$from_cell_type=="IDO1_PDL1_doublepos",]
+
+
+# pdl1_ido1_data_upsetR<-dcast(pdl1_ido1_data, from ~ to_cell_type)
+# ido1_data_upsetR<-dcast(ido1_data, from ~ to_cell_type)
+# pdl1_data_upsetR<-dcast(pdl1_data, from ~ to_cell_type)
+pdl1_checkpoint_upsetR<-dcast(pdl1checkpoint_data, from ~ to_cell_type)
+ido1_checkpoint_upsetR<-dcast(ido1checkpoint_data, from ~ to_cell_type)
+ido1pdl1_checkpoint_upsetR<-dcast(ido1pdl1checkpoint_data, from ~ to_cell_type)
+
+
+# write.csv(pdl1_ido1_data_upsetR,paste0(save_path, "ido1_pdl1_data_upsetR.csv"), row.names = F)
+# write.csv(ido1_data_upsetR,paste0(save_path, "ido1_data_upsetR.csv"), row.names = F)
+# write.csv(pdl1_data_upsetR,paste0(save_path, "pdl1_data_upsetR.csv"), row.names = F)
+write.csv(pdl1_checkpoint_upsetR,paste0(save_path, "pdl1_checkpoint_upsetR.csv"), row.names = F)
+write.csv(ido1_checkpoint_upsetR,paste0(save_path, "ido1_checkpoint_upsetR.csv"), row.names = F)
+write.csv(ido1pdl1_checkpoint_upsetR,paste0(save_path, "ido1pdl1_checkpoint_upsetR.csv"), row.names = F)
+
+```
+
+
+
+
+```{r profile of source and neighbour cells}
+##create interaction maps for checkpoint cells
+checkpoint_interaction_map_profile<-annotateSpatialNetwork(
+  gem_nomix,
+  spatial_network_name = "nearest_spatial_network",
+  cluster_column = "checkpoint",
+  create_full_network = F
+)
+
+###get cell ids of both to and from cell types along with annotation
+checkpoint_interaction_map_profile<-checkpoint_interaction_map_profile[,c("from","to", "from_cell_type","to_cell_type")]
+pdl1checkpoint_data_p <- checkpoint_interaction_map_profile[checkpoint_interaction_map_profile$from_cell_type=="PDL1_high_IDO1_low",]
+ido1checkpoint_data_p <- checkpoint_interaction_map_profile[checkpoint_interaction_map_profile$from_cell_type=="IDO1_high_PDL1_low",]
+ido1pdl1checkpoint_data_p <- checkpoint_interaction_map_profile[checkpoint_interaction_map_profile$from_cell_type=="IDO1_PDL1_doublepos",]
+
+#### subset cell ids of neighbours
+top5<-c("inf_mac2_CCL18_mac", "Treg", "IDO1_high_PDL1_low", "PDL1_high_IDO1_low", "T_CD8_mem")
+pdl1checkpoint_neigh_cell_IDs = pdl1checkpoint_data_p[to_cell_type %in% top5]$to
+ido1checkpoint_neigh_cell_IDs = ido1checkpoint_data_p[to_cell_type %in% top5]$to
+ido1pdl1checkpoint_neigh_cell_IDs = ido1pdl1checkpoint_data_p[to_cell_type %in% top5]$to
+
+
+#### subset cell ids of source
+pdl1checkpoint_source_cell_IDs <- pdl1checkpoint_data_p[from_cell_type %in% c("PDL1_high_IDO1_low")]$from
+ido1checkpoint_source_cell_IDs = ido1checkpoint_data_p[from_cell_type %in% c("IDO1_high_PDL1_low")]$from
+ido1pdl1checkpoint_source_cell_IDs = ido1pdl1checkpoint_data_p[from_cell_type %in% c("IDO1_PDL1_doublepos")]$from
+
+### subset gem_nomix with these cell ids
+pdl1checkpoint_neigh = subsetGiotto(gem_nomix, cell_ids = pdl1checkpoint_neigh_cell_IDs)
+ido1checkpoint_neigh = subsetGiotto(gem_nomix, cell_ids = ido1checkpoint_neigh_cell_IDs)
+ido1pdl1checkpoint_neigh = subsetGiotto(gem_nomix, cell_ids = ido1pdl1checkpoint_neigh_cell_IDs)
+pdl1checkpoint_source = subsetGiotto(gem_nomix, cell_ids = pdl1checkpoint_source_cell_IDs)
+ido1checkpoint_source = subsetGiotto(gem_nomix, cell_ids = ido1checkpoint_source_cell_IDs)
+ido1pdl1checkpoint_source = subsetGiotto(gem_nomix, cell_ids = ido1pdl1checkpoint_source_cell_IDs)
+# ido1checkpoint_neigh_source = subsetGiotto(gem_nomix, cell_ids = c(ido1checkpoint_source_cell_IDs,ido1checkpoint_neigh_cell_IDs))
+# pdl11checkpoint_neigh_source = subsetGiotto(gem_nomix, cell_ids = c(pdl1checkpoint_source_cell_IDs,pdl1checkpoint_neigh_cell_IDs))
+### violin plots of cytokines 
+## pdl1 Ext_Data_Fig6l
+pdl1check_neigh_violin <-violinPlot(pdl1checkpoint_neigh, feats = c("CCL18", "IL24", "IL1B", "IFNGR2", "CXCL9", "IL32", "TNFSF14", "FASLG"), cluster_column = 'checkpoint', strip_position = 'right', 
+           save_param = list(save_name = 'Ext_Data_Fig6l_PDL1_myeloid_checkpoint_neigh_source.pdf', save_folder = 'Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix',save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 12))
+
+pdl1check_source_violin<-violinPlot(pdl1checkpoint_source, feats = c("CCL18", "IL24", "IL1B", "IFNGR2", "CXCL9", "IL32",  "TNFSF14", "FASLG"), cluster_column = 'checkpoint', strip_position = 'right', 
+           save_param = list(save_name = 'PDL1_myeloid_checkpoint_source.pdf', save_folder = 'Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix',save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 8))
+
+## ido1 Ext_Data_Fig6k
+violinPlot(ido1checkpoint_neigh, feats = c("CCL18", "IL24", "IL1B", "IFNGR2", "CXCL9", "IL32",  "TNFSF14", "FASLG"), cluster_column = 'checkpoint', strip_position = 'right', 
+           save_param = list(save_name = 'Ext_Data_Fig6k_ido1_myeloid_checkpoint_neigh.pdf', save_folder = 'Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix',save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 12))
+violinPlot(ido1checkpoint_source, feats = c("CCL18", "IL24", "IL1B", "IFNGR2", "CXCL9", "IL32",  "TNFSF14", "FASLG"), cluster_column = 'checkpoint', strip_position = 'right', 
+           save_param = list(save_name = 'ido1_myeloid_checkpoint_source.pdf', save_folder = 'Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix',save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 12))
+
+
+## ido1 pdl1
+##Source data for Fig. 4l-q
+ido1pdl1check_neigh_violin<- violinPlot(ido1pdl1checkpoint_neigh, feats = c("CCL18", "IL24", "IL1B", "IFNGR2", "CXCL9", "IL32",  "TNFSF14", "FASLG"), cluster_column = 'checkpoint', strip_position = 'right', 
+           save_param = list(save_name = 'ido1pdl1_doublepos_myeloid_checkpoint_neigh.pdf', save_folder = 'Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix',save_format = 'pdf', units = 'in',
+                           base_height = 12,
+                           base_width = 9))
+
+ido1pdl1check_neigh_violindata<-(ido1pdl1check_neigh_violin[["layers"]][[1]][["data"]])
+write.csv(ido1pdl1check_neigh_violindata, paste0(my_working_dir, "/Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix/ido1pdl1check_neigh_violindata.csv"))
+
+
+
+ido1pdl1check_source_violindata<- violinPlot(ido1pdl1checkpoint_source, feats = c("CCL18", "IL24", "IL1B", "IFNGR2", "CXCL9", "IL32",  "TNFSF14", "FASLG"), cluster_column = 'checkpoint', strip_position = 'right', 
+           save_param = list(save_name = 'ido1pdl1_doublepos_myeloid_checkpoint_source.pdf', save_folder = 'Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix',save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 12))
+
+ido1pdl1check_source_violindata<-(ido1pdl1check_source_violindata[["layers"]][[1]][["data"]])
+write.csv(ido1pdl1check_source_violindata, paste0(my_working_dir, "/Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix/ido1pdl1check_source_violindata.csv"))
+
+
+
+```
+
+
+```{r T cell profiles}
+
+##Ext_Data_Fig_6m
+ido1_pdl1_neigh_cellmetadata <- pDataDT(ido1pdl1checkpoint_neigh)
+ido1pdl1checkpoint_neigh_CD8_Treg_cell_IDs <- ido1_pdl1_neigh_cellmetadata$cell_ID[ido1_pdl1_neigh_cellmetadata$clusterf %in% c("T_CD8_mem", "Treg")]
+ido1pdl1checkpoint_CD8T_Treg = subsetGiotto(ido1pdl1checkpoint_neigh, cell_ids = ido1pdl1checkpoint_neigh_CD8_Treg_cell_IDs)
+
+t_markers = findMarkers_one_vs_all(gobject = ido1pdl1checkpoint_CD8T_Treg,
+                                 method = 'gini',
+                                 expression_values = 'normalized',
+                                 cluster_column = 'clusterf',
+                                 min_feats = 1, rank_score = 2)
+t_markers <- subset(t_markers, subset =! feats %in% c("CD68", "IGKC", "IGHG2"))
+# Display details about the marker genes in-console
+t_markers[, head(.SD, 16), by = 'cluster']
+
+topgini_genes = unique(t_markers[, head(.SD, 10), by = 'cluster']$feats)
+topgini_genes_2 <- append(topgini_genes, values = c("GZMB", "GZMK", "IL16", "LTB", "LTR", "CSTW", "KLRK1", "MALAT1", "NEAT1", "SRGN", "GZMA", "MAF", "PRF1", "GNLY", "IL2RB", "IL2RA", "LAG3", "SELL", "CCR7", "CD69"))
+plotMetaDataHeatmap(ido1pdl1checkpoint_CD8T_Treg, expression_values = 'scaled',
+                    metadata_cols = c('clusterf'),show_values = c("original"),
+                    selected_feats = topgini_genes_2 , save_param = list(save_name = 'Ext_Data_Fig_6m_t_gem_neigh_heatmap.pdf', save_folder = 'Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix',save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 12))
+
+# violinplot
+top5gini_genes = unique(t_markers[, head(.SD, 5), by = 'cluster']$feats)
+violinPlot(ido1pdl1checkpoint_CD8T_Treg, feats = top5gini_genes, cluster_column = 'clusterf', strip_position = 'right')
+```
+
+
+
+
+
+
+```{r proximity ananlysis and creating spatial maps of specific interactions}
+
+###preparing data for Fig 4g-i
+
+set.seed(seed = 2841)
+cell_proximities = cellProximityEnrichment(gobject = gem_nomix,
+                                           cluster_column = 'checkpoint',
+                                           spatial_network_name = 'nearest_spatial_network',
+                                           adjust_method = 'fdr',
+                                           number_of_simulations = 1000)
+# barplot
+cellProximityBarplot(gobject = gem_nomix,
+                     CPscore = cell_proximities,
+                     min_orig_ints = 5, min_sim_ints = 5, p_val = 0.5,
+                     save_param = list(save_folder = 'niche_plots/', # Create subdirectory
+                           save_name = 'ido1pdl1_checkpoint_cellproxBarPlot_FC',
+                           save_format = 'pdf',
+                           units = 'in',
+                           dpi = 600,
+                           base_height = 30,
+                           base_width = 12))
+
+## network
+cellProximityNetwork(gobject = gem_nomix,
+                     CPscore = cell_proximities, remove_self_edges = T,
+                     only_show_enrichment_edges = T,                     
+                     save_param = list(save_folder = 'niche_plots/', # Create subdirectory
+                           save_name = 'cellProximityNetwork',
+                           save_format = 'pdf',
+                           units = 'in',
+                           dpi = 600,
+                           base_height = 10,
+                           base_width = 15))
+
+
+## visualization of specific cell types on one FOV
+gem_nomix_cell_metadata<-pDataDT(gem_nomix)
+subset_cell_IDs = gem_nomix_cell_metadata[fov %in% c("12")]$cell_ID
+smallfov = subsetGiotto(gem_nomix, cell_ids = subset_cell_IDs)
+\
+# Option 1
+spec_interaction1 = "IDO1_PDL1_doublepos--inf_mac2_CCL18_mac"
+spec_interaction2 = "IDO1_PDL1_doublepos--T_CD8_mem"
+spec_interaction3 = "IDO1_PDL1_doublepos--Treg"
+
+
+smallfov = addCellIntMetadata(smallfov,
+                                spatial_network = 'nearest_spatial_network',
+                                cluster_column = 'checkpoint',
+                                cell_interaction = spec_interaction1,
+                                name = 'ido1pdl1_ccl18')
+
+
+smallfov = addCellIntMetadata(smallfov,
+                                spatial_network = 'nearest_spatial_network',
+                                cluster_column = 'checkpoint',
+                                cell_interaction = spec_interaction2,
+                                name = 'ido1pdl1_cd8')
+
+smallfov = addCellIntMetadata(smallfov,
+                                spatial_network = 'nearest_spatial_network',
+                                cluster_column = 'checkpoint',
+                                cell_interaction = spec_interaction3,
+                                name = 'ido1pdl1_treg')
+
+
+spatPlot(smallfov, cell_color = 'ido1pdl1_cd8',show_network = T,point_size = 3,network_color = "blue", spatial_network_name = "nearest_spatial_network",
+         select_cell_groups =  c('select_IDO1_PDL1_doublepos', 'select_T_CD8_mem', "other_IDO1_PDL1_doublepos", "other_T_CD8_mem"),
+         legend_symbol_size = 3,   other_cell_color = "darkgrey", background_color = "black",
+  other_point_size = 0.5, cell_color_code = c("select_IDO1_PDL1_doublepos"="#FFC0CB", "other_IDO1_PDL1_doublepos"= "#808000", "select_T_CD8_mem"= "#FF0000", "other_T_CD8_mem" = "#008080"), 
+  save_param = list(save_folder = 'niche_plots/', # Create subdirectory
+                           save_name = 'Fig4g_select_interactions_ido1pdl1_doublepos_cd8_mem',
+                           save_format = 'pdf',
+                           units = 'in',
+                           dpi = 600,
+                           base_height = 8,
+                           base_width = 10))
+
+spatPlot(smallfov, cell_color = 'ido1pdl1_treg',show_network = T,point_size = 3,network_color = "blue", spatial_network_name = "nearest_spatial_network",
+         select_cell_groups =  c('select_IDO1_PDL1_doublepos', 'select_Treg', "other_IDO1_PDL1_doublepos", "other_Treg"),
+         legend_symbol_size = 3,   other_cell_color = "#808080", background_color = "black", 
+  other_point_size = 0.5, cell_color_code = c("select_IDO1_PDL1_doublepos"="#FFC0CB", "other_IDO1_PDL1_doublepos"= "#808000", "select_Treg"= "#FF00FF", "other_Treg" = "#0000CD"), 
+  save_param = list(save_folder = 'niche_plots/', # Create subdirectory
+                           save_name = 'Fig4h_select_interactions_ido1pdl1_treg',
+                           save_format = 'pdf',
+                           units = 'in',
+                           dpi = 600,
+                           base_height = 8,
+                           base_width = 10))
+
+
+
+spatPlot(smallfov, cell_color = 'ido1pdl1_ccl18',show_network = T,point_size = 3,network_color = "blue", spatial_network_name = "nearest_spatial_network",
+         select_cell_groups =  c('select_IDO1_PDL1_doublepos', 'select_inf_mac2_CCL18_mac', "other_IDO1_PDL1_doublepos", "other_inf_mac2_CCL18_mac"),
+         legend_symbol_size = 3,   other_cell_color = "darkgrey", background_color = "black",
+  other_point_size = 0.5, cell_color_code = c("select_IDO1_PDL1_doublepos"="#FFC0CB", "other_IDO1_PDL1_doublepos"= "#808000", "select_inf_mac2_CCL18_mac"= "#00BFFF", "other_inf_mac2_CCL18_mac" = "#800080"), 
+  save_param = list(save_folder = 'niche_plots/', # Create subdirectory
+                           save_name = 'Fig4i_select_interactions_ido1pdl1_doublepos_ccl18_mac',
+                           save_format = 'pdf',
+                           units = 'in',
+                           dpi = 600,
+                           base_height = 8,
+                           base_width = 10))
+
+
+
+
+
+```
+
+
+
+
+
+

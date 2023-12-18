@@ -1,0 +1,93 @@
+---
+title: "Untitled"
+output: html_document
+date: "2023-07-31"
+---
+
+```{r setup, include=FALSE}
+library(Seurat)
+library(dplyr)
+library(sqldf)
+library(ggplot2)
+library(patchwork)
+library(RColorBrewer)
+library(ggpubr)
+
+library(spatstat)
+library(gplots)
+library(corrplot)
+library(stringr)
+
+library(VennDiagram)
+library(grid)#for printing PDFs off finder makrer
+DiscretePalette(40, palette = "polychrome")
+library(reshape2)
+library(ggplot2)
+
+library(sf)
+
+options(ggrepel.max.overlaps = Inf)
+#PLEASE ADD YOUR WORKING PATH HERE
+study_path<-"your_path_here/"
+#CREATE A FOLDER WITHIN 'study_path' as 'R'. ALL ANALYSIS WILL BE STORED HERE
+save_path<-paste0(study_path,"R/")
+```
+# ```{r setup, include=FALSE}
+# rds_path<-"F:/Sri_Lanka/CosMx/data_TAP/new_sl2/Data_objects/Data_objects/Seurat/"
+# cosmx <- readRDS("F:/Sri_Lanka/CosMx/data_TAP/new_sl2/Data_objects/Data_objects/Seurat/cosmx_clusterf.rds")
+# #drop any unused levels from clusterf
+# cosmx$clusterf <- droplevels(cosmx$clusterf)
+# ```
+```{r readRDS}
+#load full object
+cosmx <- readRDS(paste0(study_path, "cosmx_clusterf.Rds"))
+```
+
+
+```{r}
+#subset on patient id 
+
+##subset tissue coordinates to only include P3 or P4 or P5 or P6
+P4_image <- Crop(cosmx[["S3.SL2"]], x = c(-162500, -152500), y = c(53000, 65000))
+cosmx[["P4"]] <- P4_image
+
+P5_image <- Crop(cosmx[["S3.SL2"]], x = c(-155000, -145000), y = c(20000, 40000))
+cosmx[["P5"]] <- P5_image
+
+P3_image <- Crop(cosmx[["S3.SL2"]], x = c(-165000, -144000), y = c(-7500, 7500))
+cosmx[["P3"]] <- P3_image
+
+P6_image <- Crop(cosmx[["S3.SL2"]], x = c(-1670000, -155000), y = c( -50000, -35000))
+cosmx[["P6"]] <- P6_image
+
+P3.crop <- Crop(cosmx[["P3"]], x = c(-165000, -160000), y = c(-2000, -6000))
+cosmx[["TLO1"]] <- P3.crop
+DefaultBoundary(cosmx[["TLO1"]]) <- "segmentation"
+
+#FIGURE 2B
+pdf(paste0(save_path, "Fig2b_imagedimplot_P3_nb_clus.pdf"), 30, 15)
+  ImageDimPlot(cosmx, fov = "P3", cols = c("Mac_rich"="#E7298A", "macrophage"= "#FF7F00","inf_mac2"= "#FFC0CB", "pDC"= "#FB8072","neutrophil_rich"= "#800000","mDC"= "#A65628", "mast"= "#FFD700", "Igg_rich"= "#1B9E77", "B-cell"= "#006400", "plasmablast"= "#00FF00","fib_rich"= "#7FFFD4", "fibroblast"= "#00FFFF","ker_1"= "#F5DEB3", "ker_2"= "#F0F8FF", "ker_3"= "#FFE4E1","endothelial"= "#E41A1C", "Treg"= "#6495ED",  "NK"= "#00BFFF",   "T_CD4_mem"= "#8B008B", "T_CD4_naive"= "#DDA0DD", "T_CD8_mem"= "#000080", "T_CD8_naive"= "#ADD8E6"), coord.fixed = F, group.by = "nb_clus", axes =T, border.size = 0.1)
+dev.off()
+
+
+#SUPPLEMENTARY FIGURE 3
+pdf(paste0(save_path, "Sup_Fig3a_imagedimplot_P4_nbclus.pdf"), 25, 15)
+  ImageDimPlot(cosmx, fov = "P4", cols = c("Mac_rich"="#E7298A", "macrophage"= "#FF7F00","inf_mac2"= "#FFC0CB", "pDC"= "#FB8072","neutrophil_rich"= "#800000","mDC"= "#A65628", "mast"= "#FFD700", "Igg_rich"= "#1B9E77", "B-cell"= "#006400", "plasmablast"= "#00FF00","fib_rich"= "#7FFFD4", "fibroblast"= "#00FFFF","ker_1"= "#F5DEB3", "ker_2"= "#F0F8FF", "ker_3"= "#FFE4E1","endothelial"= "#E41A1C", "Treg"= "#6495ED",  "NK"= "#00BFFF",   "T_CD4_mem"= "#8B008B", "T_CD4_naive"= "#DDA0DD", "T_CD8_mem"= "#000080", "T_CD8_naive"= "#ADD8E6"), group.by = "nb_clus", coord.fixed = F, axes =T, border.size = 0.1)
+dev.off()
+
+#SUPPLEMENTARY FIGURE 3
+pdf(paste0(save_path, "Sup_Fig3b_imagedimplot_P5_nb_clus.pdf"), 15, 15)
+  ImageDimPlot(cosmx, fov = "P5", cols = c("Mac_rich"="#E7298A", "macrophage"= "#FF7F00","inf_mac2"= "#FFC0CB", "pDC"= "#FB8072","neutrophil_rich"= "#800000","mDC"= "#A65628", "mast"= "#FFD700", "Igg_rich"= "#1B9E77", "B-cell"= "#006400", "plasmablast"= "#00FF00","fib_rich"= "#7FFFD4", "fibroblast"= "#00FFFF","ker_1"= "#F5DEB3", "ker_2"= "#F0F8FF", "ker_3"= "#FFE4E1","endothelial"= "#E41A1C", "Treg"= "#6495ED",  "NK"= "#00BFFF",   "T_CD4_mem"= "#8B008B", "T_CD4_naive"= "#DDA0DD", "T_CD8_mem"= "#000080", "T_CD8_naive"= "#ADD8E6"), coord.fixed = F, group.by = "nb_clus", axes =T, border.size = 0.1)
+dev.off()
+
+#SUPPLEMENTARY FIGURE 3
+pdf(paste0(save_path, "Sup_Fig3c_imagedimplot_P6_nb_clus.pdf"), 25, 20)
+  ImageDimPlot(cosmx, fov = "P6", cols = c("Mac_rich"="#E7298A", "macrophage"= "#FF7F00","inf_mac2"= "#FFC0CB", "pDC"= "#FB8072","neutrophil_rich"= "#800000","mDC"= "#A65628", "mast"= "#FFD700", "Igg_rich"= "#1B9E77", "B-cell"= "#006400", "plasmablast"= "#00FF00","fib_rich"= "#7FFFD4", "fibroblast"= "#00FFFF","ker_1"= "#F5DEB3", "ker_2"= "#F0F8FF", "ker_3"= "#FFE4E1","endothelial"= "#E41A1C", "Treg"= "#6495ED",  "NK"= "#00BFFF",   "T_CD4_mem"= "#8B008B", "T_CD4_naive"= "#DDA0DD", "T_CD8_mem"= "#000080", "T_CD8_naive"= "#ADD8E6"), coord.fixed = F, group.by = "nb_clus", axes =T,border.size = 0.1)
+dev.off()
+
+```
+
+
+
+
+

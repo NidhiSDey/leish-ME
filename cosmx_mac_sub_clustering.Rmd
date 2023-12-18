@@ -1,0 +1,435 @@
+```{r setup, include=FALSE}
+library(Seurat)
+library(dplyr)
+library(sqldf)
+library(ggplot2)
+library(patchwork)
+library(RColorBrewer)
+library(ggpubr)
+library(spatstat)
+library(gplots)
+library(corrplot)
+library(stringr)
+
+library(VennDiagram)
+library(grid)#for printing PDFs off finder makrer
+DiscretePalette(40, palette = "polychrome")
+library(reshape2)
+library(ggplot2)
+options(ggrepel.max.overlaps = Inf)
+#PLEASE ADD YOUR WORKING PATH HERE
+study_path<-"your_path_here/"
+#CREATE A FOLDER WITHIN 'study_path' as 'R'. ALL ANALYSIS WILL BE STORED HERE
+save_path<-paste0(study_path,"R/")
+```
+READ RDS
+```{r readRDS}
+cosmx<-readRDS(paste0(study_path, "SL2_seurat_object.Rds"))
+```
+RENAME BASED ON MARKER GENES PER IDENTITY ("nb_clus") PROVIDED BY NANOSTRING 
+```{r find markers and reset idents}
+Idents(cosmx) <- "nb_clus"
+cosmx_nb_clus_markers <- FindAllMarkers(cosmx, only.pos = T)
+# Rename identity classes based on marker genes. These were previously not identified by Nanostring
+cosmx <- RenameIdents(object = cosmx, c( "a" = "Mac_rich", "b" = "Igg_rich", "c"= "fib_rich", "d" = "ker_1", "e" = "ker_2", "f" ="ker_3", "neutrophil" = "neutrophil_rich", "T CD4 memory" = "T_CD4_mem",	"T CD4 naive" = "T_CD4_naive",	"T CD8 memory" = "T_CD8_mem",	"T CD8 naive" = "T_CD8_naive", "monocyte" = "inf_mac2"))
+levels(cosmx)
+#Hard rename nb_clus
+cosmx$nb_clus<-Idents(cosmx)
+```
+SUB_CLUSTER INDIVIDUAL IDENTITIES FROM ABOVE TO FIND GRANULAR PHENOTYPES/CELL IDENTITIES - "Mac_rich"
+```{r}
+#subset
+mac_seurat1 <- subset(x = cosmx, idents = c("Mac_rich"))
+#run pca
+mac_seurat1 <- RunPCA(mac_seurat1, assay = "SCT", verbose = FALSE)
+#check pca characteristics
+ElbowPlot(mac_seurat1)
+#re-cluster
+mac_seurat1 <- FindNeighbors(mac_seurat1, reduction = "pca", dims = 1:50)
+mac_seurat1 <- FindClusters(mac_seurat1, verbose = FALSE, resolution = 0.8)
+#run umap for visualisation
+mac_seurat1 <- RunUMAP(mac_seurat1, reduction = "pca", dims = 1:50)
+#this pdf is not used in any figures but shows how granularity within "Mac_rich" identity
+pdf(paste0(save_path, "mac_seurat1_DimPlot_PC1to50_0.8res.pdf"))
+  DimPlot(mac_seurat1, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend()
+dev.off()
+#run to identify marker genes within "Mac_rich" sub-clusters
+mac_seurat1.markers <- FindAllMarkers(mac_seurat1, only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
+write.csv(mac_seurat1.markers, paste0(save_path,"mac_seurat1_de_markers_pc50res0.8.csv"), row.names = TRUE)
+#assign new names based on gene expression as identified above
+DefaultAssay(mac_seurat1)<-"SCT"
+mac_seurat1<-SetIdent(mac_seurat1, value = mac_seurat1$seurat_clusters)
+new.cluster.ids <- c("mix","CHI3L1_mac","moDC1","inf_mac2","inf_mac1","Treg","inf_mac1","DC1","MT2A_mac","moDC1","inf_mac2","inf_mac1","MT2A_mac","DC3","Neutrophil","DC3","DC1","inf_mac2","MT2A_mac","inf_mac1","DC1","Neutrophil","mix","inf_mac2","inf_mac2","platelets","mix","inf_mac2","MT2A_mac","Neutrophil","MT2A_mac")
+#create new meta data column morpho to retain new names
+names(new.cluster.ids) <- levels(mac_seurat1)
+mac_seurat1 <- RenameIdents(mac_seurat1, new.cluster.ids)
+mac_seurat1$morpho <- Idents(mac_seurat1)
+levels(Idents(mac_seurat1))
+#this pdf is not used in any figures but shows how granularity within "Mac_rich" identity
+pdf(paste0(save_path, "mac_seurat1_DimPlot_PC1to50_0.8res_labelled.pdf"))
+  DimPlot(mac_seurat1, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend()
+dev.off()
+
+```
+SUB_CLUSTER INDIVIDUAL IDENTITIES FROM ABOVE TO FIND GRANULAR PHENOTYPES/CELL IDENTITIES - "mDC" 
+```{r}
+#subset
+mDC_seurat <- subset(x = cosmx, idents = c("mDC"))
+#run pca
+mDC_seurat <- RunPCA(mDC_seurat, assay = "SCT", verbose = FALSE)
+#check pca characteristics
+ElbowPlot(mDC_seurat)
+#re-cluster
+mDC_seurat <- FindNeighbors(mDC_seurat, reduction = "pca", dims = 1:50)
+mDC_seurat <- FindClusters(mDC_seurat, verbose = FALSE, resolution = 0.8)
+#run umap for visualisation
+mDC_seurat <- RunUMAP(mDC_seurat, reduction = "pca", dims = 1:50)
+#this pdf is not used in any figures but shows how granularity within "mDC" identity
+pdf(paste0(save_path, "mDC_seurat_DimPlot_PC1to20_0.8res.pdf"))
+  DimPlot(mDC_seurat, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend()
+dev.off()
+#run to identify marker genes within "mDC" sub-clusters
+mDC_seurat.markers <- FindAllMarkers(mDC_seurat, only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
+write.csv(mDC_seurat.markers, paste0(save_path,"mDC_seurat_de_markers_pc20res0.8.csv"), row.names = TRUE)
+#assign new names based on gene expression as identified above
+DefaultAssay(mDC_seurat)<-"SCT"
+mDC_seurat<-SetIdent(mDC_seurat, value = mDC_seurat$seurat_clusters)
+new.cluster.ids <- c("mix","DC1","DC2","DC2","DC3","DC2","DC1","res_mac","mix","mix")
+#create new meta data column morpho to retain new names
+names(new.cluster.ids) <- levels(mDC_seurat)
+mDC_seurat <- RenameIdents(mDC_seurat, new.cluster.ids)
+mDC_seurat$morpho <- Idents(mDC_seurat)
+levels(Idents(mDC_seurat))
+#this pdf is not used in any figures but shows how granularity within "mDC" identity
+pdf(paste0(save_path, "mDC_seurat_DimPlot_PC1to50_0.8res_labelled.pdf"))
+  DimPlot(mDC_seurat, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend()
+dev.off()
+```
+SUB_CLUSTER INDIVIDUAL IDENTITIES FROM ABOVE TO FIND GRANULAR PHENOTYPES/CELL IDENTITIES - "Igg_rich" 
+```{r}
+#subset
+igg_seurat <- subset(x = cosmx, idents = c("Igg_rich"))
+#run pca
+igg_seurat <- RunPCA(igg_seurat, assay = "SCT", verbose = FALSE)
+#check pca characteristics  
+ElbowPlot(igg_seurat)
+#re-cluster
+igg_seurat <- FindNeighbors(igg_seurat, reduction = "pca", dims = 1:50)
+igg_seurat <- FindClusters(igg_seurat, verbose = FALSE, resolution = 1.2)
+#run umap for visualisation
+igg_seurat <- RunUMAP(igg_seurat, reduction = "pca", dims = 1:50)
+#this pdf is not used in any figures but shows how granularity within "Igg_rich" identity
+pdf(paste0(save_path, "igg_seurat_DimPlot_PC1to50_0.8res.pdf"))
+  DimPlot(igg_seurat, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend()
+dev.off()
+#run to identify marker genes within "Igg_rich" sub-clusters
+igg_seurat.markers <- FindAllMarkers(igg_seurat, only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
+write.csv(igg_seurat.markers, paste0(save_path,"igg_seurat_de_markers_pc50res0.8.csv"), row.names = TRUE)
+#assign new names based on gene expression as identified above
+DefaultAssay(igg_seurat)<-"SCT"
+igg_seurat<-SetIdent(igg_seurat, value = igg_seurat$seurat_clusters)
+new.cluster.ids <- c("mix","plasmablast","plasmablast","fibroblast3_igg","NK_igg","plasmablast","mix","plasmablast","plasmablast","mix","mix","fibroblast1_igg","mix","plasmablast","neutrophil_igg","mix","mix","mix","mix","plasmablast","plasmablast","mix","plasmablast","plasmablast","LC2_igg","NK_igg","LC2_igg","mix","plasmablast","mix","plasmablast","plasmablast","plasmablast_cycl","mast_igg")
+#create new meta data column morpho to retain new names
+names(new.cluster.ids) <- levels(igg_seurat)
+igg_seurat <- RenameIdents(igg_seurat, new.cluster.ids)
+igg_seurat$morpho <- Idents(igg_seurat)
+levels(Idents(igg_seurat))
+#this pdf is not used in any figures but shows how granularity within "Igg_rich" identity
+pdf(paste0(save_path, "igg_seurat_labelled_DimPlot_PC1to50_0.8res_edit.pdf"))
+  DimPlot(igg_seurat, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend()
+dev.off()
+```
+SUB_CLUSTER INDIVIDUAL IDENTITIES FROM ABOVE TO FIND GRANULAR PHENOTYPES/CELL IDENTITIES - "fib_rich" 
+```{r subclustering unsupervised clusters}
+#subset
+fib_seurat1 <- subset(x = cosmx, idents = c("fib_rich"))
+#run pca
+fib_seurat1 <- RunPCA(fib_seurat1, assay = "SCT", verbose = FALSE)
+#check pca characteristics 
+ElbowPlot(fib_seurat1)
+#re-cluster
+fib_seurat1 <- FindNeighbors(fib_seurat1, reduction = "pca", dims = 1:50)
+fib_seurat1 <- FindClusters(fib_seurat1, verbose = FALSE)
+#run umap for visualisation
+fib_seurat1 <- RunUMAP(fib_seurat1, reduction = "pca", dims = 1:50)
+#this pdf is not used in any figures but shows how granularity within "fib_rich" identity
+pdf(paste0(save_path, "fib_seurat1_DimPlot_PC1to50_0.8res.pdf"))
+  DimPlot(fib_seurat1, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend()
+dev.off()
+#run to identify marker genes within "fib_rich" sub-clusters
+fib_seurat1.markers <- FindAllMarkers(fib_seurat1, only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
+write.csv(fib_seurat1.markers, paste0(save_path,"fib_seurat1_de_markers_pc50res0.8.csv"), row.names = TRUE)
+#assign new names based on gene expression as identified above
+DefaultAssay(fib_seurat1)<-"SCT"
+fib_seurat1<-SetIdent(fib_seurat1, value = fib_seurat1$seurat_clusters)
+new.cluster.ids <- c("fib1","mix","fib3","fib2","fib1","mix","fib4","fib4","fib2","res_mac","fib1","fib3","endothelial","inf_mac1","fib1","fib2","fib4","fib3","inf_mac1","endothelial","mix","fib1","endothelial","mix")
+#create new meta data column morpho to retain new names
+names(new.cluster.ids) <- levels(fib_seurat1)
+fib_seurat1 <- RenameIdents(fib_seurat1, new.cluster.ids)
+fib_seurat1$morpho <- Idents(fib_seurat1)
+levels(Idents(fib_seurat1))
+#this pdf is not used in any figures but shows how granularity within "fib_rich" identity
+pdf(paste0(save_path, "fib_seurat1_labelled_DimPlot_PC1to50_0.8res.pdf"))
+  DimPlot(fib_seurat1, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend()
+dev.off()
+```
+SUB_CLUSTER INDIVIDUAL IDENTITIES FROM ABOVE TO FIND GRANULAR PHENOTYPES/CELL IDENTITIES - "fibroblast" 
+```{r}
+#subset
+fib_seurat2 <- subset(x = cosmx, idents = c("fibroblast"))
+#run pca
+fib_seurat2 <- RunPCA(fib_seurat2, assay = "SCT", verbose = FALSE)
+#check pca characteristics 
+ElbowPlot(fib_seurat2)
+#re-cluster
+fib_seurat2 <- FindNeighbors(fib_seurat2, reduction = "pca", dims = 1:50)
+fib_seurat2 <- FindClusters(fib_seurat2, verbose = FALSE)
+#run umap for visualisation
+fib_seurat2 <- RunUMAP(fib_seurat2, reduction = "pca", dims = 1:50)
+#this pdf is not used in any figures but shows how granularity within "fibroblast" identity
+pdf(paste0(save_path, "fib_seurat2_DimPlot_PC1to50_0.8res.pdf"))
+  DimPlot(fib_seurat2, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend()
+dev.off()
+#run to identify marker genes within "fibroblast" sub-clusters
+fib_seurat2.markers <- FindAllMarkers(fib_seurat2, only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
+write.csv(fib_seurat2.markers, paste0(save_path,"fib_seurat2_de_markers_pc50res0.8.csv"), row.names = TRUE)
+#assign new names based on gene expression as identified above
+DefaultAssay(fib_seurat2)<-"SCT"
+fib_seurat2<-SetIdent(fib_seurat2, value = fib_seurat2$seurat_clusters)
+new.cluster.ids <- c("fib1","fib2","fib3","fib3","mix","mix","mix","fib1")
+#create new meta data column morpho to retain new names
+names(new.cluster.ids) <- levels(fib_seurat2)
+fib_seurat2 <- RenameIdents(fib_seurat2, new.cluster.ids)
+fib_seurat2$morpho <- Idents(fib_seurat2)
+levels(Idents(fib_seurat2))
+#this pdf is not used in any figures but shows how granularity within "fibroblast" identity
+pdf(paste0(save_path, "fib_seurat2_labelled_DimPlot_PC1to50_0.8res.pdf"))
+  DimPlot(fib_seurat2, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend()
+dev.off()
+```
+SUB_CLUSTER INDIVIDUAL IDENTITIES FROM ABOVE TO FIND GRANULAR PHENOTYPES/CELL IDENTITIES - c("macrophage", "neutrophil_rich") 
+```{r}
+#subset
+neutro_seurat <- subset(x = cosmx, idents = c("macrophage", "neutrophil_rich"))
+#run pca
+neutro_seurat <- RunPCA(neutro_seurat, assay = "SCT", verbose = FALSE)
+#check pca characteristics 
+ElbowPlot(neutro_seurat)
+#re-cluster
+neutro_seurat <- FindNeighbors(neutro_seurat, reduction = "pca", dims = 1:50)
+neutro_seurat <- FindClusters(neutro_seurat, verbose = FALSE)
+#run umap for visualisation
+neutro_seurat <- RunUMAP(neutro_seurat, reduction = "pca", dims = 1:50)
+#this pdf is not used in any figures but shows how granularity within c("macrophage", "neutrophil_rich") identity
+pdf(paste0(save_path, "neutro_seurat_DimPlot_PC1to20_0.8res.pdf"))
+  DimPlot(neutro_seurat, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend()
+dev.off()
+#run to identify marker genes within c("macrophage", "neutrophil_rich") sub-clusters
+neutro_seurat.markers <- FindAllMarkers(neutro_seurat, only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
+write.csv(neutro_seurat.markers, paste0(save_path,"neutro_seurat_de_markers_pc50res0.8.csv"), row.names = TRUE)
+#assign new names based on gene expression as identified above
+DefaultAssay(neutro_seurat)<-"SCT"
+neutro_seurat<-SetIdent(neutro_seurat, value = neutro_seurat$seurat_clusters)
+new.cluster.ids <- c("MT2A_mac","CHI3L1_mac","CHI3L1_mac","inf_mac2","inf_mac1","CHI3L1_mac","res_mac","inf_mac1","Neutrophil","inf_mac2","inf_mac1","moDC1","CHI3L1_mac","res_mac","mast","mast")
+#create new meta data column morpho to retain new names
+names(new.cluster.ids) <- levels(neutro_seurat)
+neutro_seurat <- RenameIdents(neutro_seurat, new.cluster.ids)
+neutro_seurat$morpho <- Idents(neutro_seurat)
+levels(Idents(neutro_seurat))
+#this pdf is not used in any figures but shows how granularity within c("macrophage", "neutrophil_rich") identity
+pdf(paste0(save_path, "neutro_seurat_labelled_DimPlot_PC1to50_0.8res.pdf"))
+  DimPlot(neutro_seurat, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend()
+dev.off()
+```
+USE ALL "LEARNT" UNDER STRUCTURE FROM THE ABOVE SUB-CLUSTERING AND BACK TO THE PARENT OBJECT
+PARENT: Cosmx
+CHILDREN: "Mac_rich" "mDC" "fib_rich" "fibroblast" c("macrophage", "neutrophil_rich")
+```{r}
+#get phenotyping from parent - cosmx
+meta_cosmx <-cosmx@meta.data
+meta_cosmx$final_clustering<-meta_cosmx$nb_clus
+meta_cosmx <- meta_cosmx[, c("cell_ID", "final_clustering")]
+############################################################
+#assign re-clustered IDs from children 
+#1 parent, 6 children - "Mac_rich" "mDC" "fib_rich" "fibroblast" c("macrophage", "neutrophil_rich")
+############################################################
+
+#get new phenotypying info from child1
+meta_mac1 <- mac_seurat1@meta.data
+meta_mac1$final_clustering<-meta_mac1$morpho
+meta_mac1 <- meta_mac1[, c("cell_ID", "final_clustering")]
+
+#get new phenotyping info from child2
+meta_neutro <- neutro_seurat@meta.data
+meta_neutro$final_clustering<-meta_neutro$morpho
+meta_neutro <- meta_neutro[, c("cell_ID", "final_clustering")]
+
+#get new phenotyping info from child3
+meta_mdc <- mDC_seurat@meta.data
+meta_mdc$final_clustering<-meta_mdc$morpho
+meta_mdc <- meta_mdc[, c("cell_ID", "final_clustering")]
+
+#get new phenotyping info from child4
+meta_igg <- igg_seurat@meta.data
+meta_igg$final_clustering<-meta_igg$morpho
+meta_igg <- meta_igg[, c("cell_ID", "final_clustering")]
+
+#get new phenotyping info from child5
+meta_fib1 <- fib_seurat1@meta.data
+meta_fib1$final_clustering<-meta_fib1$morpho
+meta_fib1 <- meta_fib1[, c("cell_ID", "final_clustering")]
+
+#get new phenotyping info from child6
+meta_fib2 <- fib_seurat2@meta.data
+meta_fib2$final_clustering<-meta_fib2$morpho
+meta_fib2 <- meta_fib2[, c("cell_ID", "final_clustering")]
+
+#get differences from parent and children
+cell_ids_needed_from_parent <- setdiff(meta_cosmx$cell_ID, c(meta_mac1$cell_ID,
+                                                             meta_neutro$cell_ID,
+                                                             meta_mdc$cell_ID,
+                                                             meta_igg$cell_ID,
+                                                             meta_fib1$cell_ID,
+                                                             meta_fib2$cell_ID))
+                                       #, meta_tnk$cell_ID))
+#subset the above cell IDs from parent
+meta_cosmx_subset <- subset(meta_cosmx, cell_ID %in% cell_ids_needed_from_parent)
+#bind all meta data together
+meta_to_add <- rbind(meta_cosmx_subset,meta_mac1, meta_neutro,meta_mdc, meta_igg, meta_fib1,meta_fib2)
+
+
+#add new metadata to seuratObj
+meta_to_add$cell_ID<-NULL
+cosmx <- AddMetaData(cosmx, metadata = meta_to_add)
+
+cosmx <- SetIdent(cosmx, value = cosmx@meta.data$final_clustering)
+DimPlot(cosmx, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend() 
+levels(cosmx)
+###########################################################################################################
+```
+SUBSET MYELOID CELLS 
+```{r plotting myeloid pop}
+#subset
+cosmx_clusterf <- subset(x = cosmx, idents = c("CHI3L1_mac","inf_mac1", "inf_mac2","MT2A_mac","moDC1","res_mac","Neutrophil", "DC1", "DC2","DC3", "platelets", "pDC", "mast"))
+levels(cosmx_clusterf)
+#run pca
+cosmx_clusterf <- RunPCA(cosmx_clusterf, assay = "SCT", verbose = FALSE)
+#check pca results
+ElbowPlot(cosmx_clusterf)
+#re-cluster
+cosmx_clusterf <- FindNeighbors(cosmx_clusterf, reduction = "pca", dims = 1:50)
+cosmx_clusterf <- FindClusters(cosmx_clusterf, verbose = FALSE, resolution = 1.2)
+#run umap for visualisation
+cosmx_clusterf <- RunUMAP(cosmx_clusterf, reduction = "pca", dims = 1:50)
+#this pdf is not used in any figures but shows how granularity within myeloid cells
+pdf(paste0(save_path, "cosmx_clusterf_DimPlot_pc50_res1.2.pdf"))
+  DimPlot(cosmx_clusterf, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend()
+dev.off()
+#run to identify marker genes within myeloid cell sub-clusters
+cosmx_clusterf.markers <- FindAllMarkers(cosmx_clusterf, only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
+write.csv(cosmx_clusterf.markers, paste0(save_path,"cosmx_clusterf_de_markers_pc50_res1.2.csv"), row.names = TRUE)
+#assign new names based on gene expression as identified above
+DefaultAssay(cosmx_clusterf)<-"SCT"
+cosmx_clusterf<-SetIdent(cosmx_clusterf, value = cosmx_clusterf$seurat_clusters)
+new.cluster.ids <- c("inf_mac2:CHI3L1_mac","mono_mac1","mono_mac2","inf_mac2:CCL18_mac","moDC","pDC","inf_mac1","inf_mac1","inf_mac2:CHI3L1_mac","res_mac1","moDC","cDC2","inf_mac1","res_mac2","neutrophil","res_mac1","res_mac1","inf_mac2:CCL18_mac","moDC","DC3","res_inf_mac1","DC4","mono_mac2","mono_mac2","mast","mono_mac1","moDC","DC1","inf_mac2:CCL18_mac","moDC","mono_mac1","mono_mac2","DC3","fib1","DC3","DC3","DC3","mono_mac1","mono_mac1","DC3","DC3")
+#create new meta data column morpho to retain new names
+names(new.cluster.ids) <- levels(cosmx_clusterf)
+cosmx_clusterf <- RenameIdents(cosmx_clusterf, new.cluster.ids)
+cosmx_clusterf$morpho <- Idents(cosmx_clusterf)
+levels(Idents(cosmx_clusterf))
+############################################################
+#assign re-clustered IDs from children and grandchildren
+#1 parent, 1 child
+############################################################
+#get new phenotypying info from child
+meta_cosmx_clusterf <- cosmx_clusterf@meta.data
+meta_cosmx_clusterf$cluster<-meta_cosmx_clusterf$morpho
+meta_cosmx_clusterf <- meta_cosmx_clusterf[, c("cell_ID", "cluster")]
+#parent metadata
+meta_all <- cosmx@meta.data
+meta_all$cluster<-meta_all$final_clus
+meta_all <- meta_all[, c("cell_ID", "cluster")]
+#get phenotypying info from parent
+cell_ids_needed_from_parent_cosmx <- setdiff(meta_all$cell_ID, meta_cosmx_clusterf$cell_ID)
+meta_required_cosmx <- subset(meta_all, cell_ID %in% cell_ids_needed_from_parent_cosmx)
+#add metadata
+meta_to_add_final <- rbind(meta_cosmx_clusterf, meta_required_cosmx)
+cosmx <- AddMetaData(cosmx, metadata = meta_to_add_final)
+#visualise
+cosmx <- SetIdent(cosmx, value = cosmx@meta.data$cluster)
+DimPlot(cosmx, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend() 
+levels(cosmx)
+
+```
+FILTER NON-MYELOID CELLS BY SUBSETTING & THEN RE-CLUSTER FOR FINAL ANNOTATIONS 
+```{r re_cluster_for_final_annotations}
+#subset/filter myeloid cells
+sub_seurat <- subset(x = cosmx, idents = c("inf_mac2:CHI3L1_mac","mono_mac1", "mono_mac2","inf_mac2:CCL18_mac","moDC","pDC","inf_mac1", "res_mac1", "cDC2","DC3", "res_mac2", "neutrophil", "DC3", "res_inf_mac1","DC4","mast","DC1"))
+levels(sub_seurat)
+#run pca
+sub_seurat <- RunPCA(sub_seurat, assay = "SCT", verbose = FALSE)
+#run pca characteristics
+ElbowPlot(sub_seurat)
+#re-cluster
+sub_seurat <- FindNeighbors(sub_seurat, reduction = "pca", dims = 1:50)
+sub_seurat <- FindClusters(sub_seurat, verbose = FALSE)
+#re-visualise
+sub_seurat <- RunUMAP(sub_seurat, reduction = "pca", dims = 1:50)
+#this pdf is not used in any figures but shows how granularity within myeloid cells
+pdf(paste0(save_path, "subcluster_sub_seurat_DimPlo.pdf"))
+  DimPlot(sub_seurat, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend()
+dev.off()
+#run to identify marker genes within myeloid cell sub-clusters
+sub_seurat.markers <- FindAllMarkers(sub_seurat, only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
+write.csv(sub_seurat.markers, paste0(save_path,"sub_seurat_de_markers_pc50_res0.8.csv"), row.names = TRUE)
+#assign new names based on gene expression as identified above
+DefaultAssay(sub_seurat)<-"SCT"
+sub_seurat<-SetIdent(sub_seurat, value = sub_seurat$seurat_clusters)
+new.cluster.ids <- c("inf_mac2_CCL18_mac","inf_mac2_CHI3L1_mac","moDC2","inf_mac2_CCL18_mac","inf_mac1","pDC","inf_mac1","cDC2","moDC1","res_mac","DC3","inf_mac1","neutrophil","DC1","inf_mac2_CCL18_mac","DC1","moDC3","cDC2","DC1","moDC3","inf_mac2_CCL18_mac","mast","moDC3", "moDC3","inf_mac2_CCL18_mac","DC1","moDC1","inf_mac2_CCL18_mac","mix","moDC3","pDC","moDC3")
+#create new meta data column morpho to retain new names
+names(new.cluster.ids) <- levels(sub_seurat)
+sub_seurat <- RenameIdents(sub_seurat, new.cluster.ids)
+sub_seurat$morpho <- Idents(sub_seurat)
+
+#check all phenotypes
+levels(sub_seurat)
+#sub_seurat_without_mix_renamed - RETAINING MYELOID CELLS ONLY 
+cosmx_myeloid <- subset(x = sub_seurat, idents = c("mix"), invert=TRUE)
+#check all phenotypes
+levels(cosmx_myeloid)
+
+###DO NOT UNCOMMENT THE CODE BELOW UNLESS RE-STARTING ANALYSIS
+#saveRDS(cosmx_myeloid, file = "cosmx_myeloid_clusterf.Rds")
+
+############################################################
+#assign re-clustered IDs from parent and 1 child
+#1 parent, 1 child
+############################################################
+#get new phenotypying info from child
+meta_sub_seurat <- sub_seurat@meta.data
+meta_sub_seurat$clusterf<-meta_sub_seurat$morpho
+meta_sub_seurat <- meta_sub_seurat[, c("cell_ID", "clusterf")]
+#parent metadata
+meta_all <- cosmx@meta.data
+meta_all$clusterf<-meta_all$cluster
+meta_all <- meta_all[, c("cell_ID", "clusterf")]
+#get phenotypying info from parent
+cell_ids_needed_from_parent_cosmx <- setdiff(meta_all$cell_ID, meta_sub_seurat$cell_ID)
+meta_required_cosmx <- subset(meta_all, cell_ID %in% cell_ids_needed_from_parent_cosmx)
+#add meta data
+meta_to_add_final <- rbind(meta_sub_seurat, meta_required_cosmx)
+cosmx <- AddMetaData(cosmx, metadata = meta_to_add_final)
+#visualise
+cosmx <- SetIdent(cosmx, value = cosmx@meta.data$clusterf)
+DimPlot(cosmx, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE) + NoLegend() 
+levels(cosmx)
+###DO NOT UNCOMMENT THE CODE BELOW UNLESS RE-STARTING ANALYSIS
+#complete object with all annotation
+# saveRDS(cosmx, file = "cosmx_clusterf.Rds")
+# write.csv(meta_to_add_final, paste0(save_path, "sub_cluster_clusterf.csv"))
+#find markers for final full object
+cosmx <- readRDS(paste0(study_path, "cosmx_clusterf.Rds"))
+cosmx.markers <- FindAllMarkers(cosmx, only.pos = TRUE, min.pct = 0.1, logfc.threshold = 0.1)
+write.csv(cosmx.markers, paste0(save_path,"cosmx_final_clusterf.csv"), row.names = TRUE)
+```
+

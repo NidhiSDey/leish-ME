@@ -1,0 +1,321 @@
+---
+title: "giotto_SL2"
+author: "Nidhi"
+date: "2022-09-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(remotes)
+library(dplyr)
+library(rcartocolor)
+library(reticulate)
+library(ggplot2)
+#remotes::install_github("RubD/Giotto@0c8c2866e881b1c6b35ddc97c24dcb58b555c375")
+# add color palettes if you want!
+library(Giotto)
+installGiottoEnvironment()
+# reticulate activate the default Giotto environment.
+default_instrs <- createGiottoInstructions()
+
+# Extract python path information
+default_python_path <- default_instrs$python_path
+pal <- carto_pal(n=10, "Pastel")
+#PLEASE ADD YOUR WORKING PATH HERE
+study_path<-"your_path_here/"
+#load giotto object
+SL2_giotto <- load(paste0(study_path,"/complete_giotto_object_PostAnalysis.RData"))
+#add instructions
+gem <-changeGiottoInstructions(gem, params =c("save_plot", "save_dir", "python_path") ,
+new_values = c("TRUE",study_path, default_python_path),
+                                     return_gobject = TRUE)
+
+```
+
+```{r scale and add stats}
+
+
+gem <- normalizeGiotto(gem,verbose = T)
+gem <- addStatistics(gobject = gem, expression_values = c('normalized'), detection_threshold = 1)
+# adjust expression matrix for technical or known variables
+gem <- adjustGiottoMatrix(gobject = gem, expression_values = c('normalized'),
+                                 covariate_columns = c('nr_feats', 'total_expr'),
+                                 return_gobject = TRUE,
+                                 update_slot = c('custom'))
+
+```
+
+```{r annotate gem}
+# extract cell metadata
+cell_metadata = pDataDT(gem)
+#cell_metadata[['nb_clus']]
+
+
+
+
+# create vector with cell type names as names of the vector
+nb_clus_order =c("plasmablast" ,"b","f","macrophage","Treg","a","c","T CD8 naive","e","endothelial","NK","B-cell","d","T CD8 memory","mDC","pDC","monocyte","T CD4 memory","neutrophil","fibroblast","mast","T CD4 naive")
+
+#create vector with required annotation names of clusters
+clusters_cell_types_skin = c('mac rich', 'Igg rich', 'B-Cell', 'fib_rich','KC1', 'KC2','endothelial', 'KC3', 'fib', 'mac', 'mast', 'mDC', 'monocyte', 'neutrophil', 'NK', 'pDC', 'plasmablast','T CD4 mem', 'T CD4 naive', 'T CD8 mem', 'T CD8 naive', 'Treg')
+
+## in the figures fib_rich, Igg rich, mac rich are changed to fib2, plasmablast2, mac2 
+
+#assign new names to cell type vector 
+names(clusters_cell_types_skin) = as.character(sort(nb_clus_order))
+# add new cell meta column 
+gem = annotateGiotto(gobject = gem,
+                          annotation_vector = clusters_cell_types_skin,
+                          cluster_column = 'nb_clus')
+```
+
+
+```{r add new clustering results}
+
+
+save_path <-  paste0(study_path, "R/")
+final_clus <- read.csv(paste0(save_path, "sub_cluster_clusterf.csv"))
+
+gem = addCellMetadata(gem,
+                        new_metadata = final_clus,
+                        by_column = T,
+                        column_cell_ID = 'cell_ID')
+cell_metadata<- pDataDT(gem)
+
+
+```
+
+
+
+```{r add PID metadata}
+# extract cell meta data from combined giotto object
+cell_metadata <- pDataDT(gem)
+# add patient id column from values from fov column to assign PID 
+cell_metadata$patient_id <- cell_metadata$fov
+cell_metadata$patient_id[cell_metadata$patient_id %in% c("1","2","3","4","5")] <- "P6"
+cell_metadata$patient_id[cell_metadata$patient_id %in% c("6","7","8","9","10","11","12","13","22")] <- "P3"
+cell_metadata$patient_id[cell_metadata$patient_id %in% c("14","15","16","17")] <- "P5"
+cell_metadata$patient_id[cell_metadata$patient_id %in% c("19","21")] <- "P4"
+
+#patientwise cell number # extended data fig3b. plotted in graphpad
+table(cell_metadata$patient_id)
+#add metadata back to combined giotto obj
+gem = addCellMetadata(gem,
+                       new_metadata = cell_metadata,
+                       by_column = T,
+                       column_cell_ID = 'cell_ID')
+
+
+#plot umap on pid # extended fig 3c
+plotUMAP(gobject = gem,
+         cell_color = 'patient_id',show_center_label = F, cell_color_code = c("P4"="#E7298A" ,"P3"="#1B9E77","P5" ="#377EB8","P6"= "#FF7F00"), 
+         show_NN_network = F, point_size = 1,
+          save_param = list(save_folder = 'niche_plots/', # Create subdirectory
+                           save_name = 'Ext_Data_Fig3c_umap_pid',
+                           save_format = 'pdf',
+                           units = 'in'))
+
+#Extended data fig 3d 
+filterDistributions(gem,
+                    plot_type = 'hist',
+                    detection = 'cells',
+                    #method = c('mean'),
+                    feat_type = 'rna',
+                    nr_bins = 50,
+                    save_param = list(save_folder = 'niche_plots/', # Create subdirectory
+                           save_name = 'Ext_Data_Fig3d_gem_feats_percell',
+                           save_format = 'pdf',
+                           units = 'in'))
+#Extended data fig 3e 
+filterDistributions(gem,
+                    plot_type = 'hist',
+                    detection = 'cells',
+                    #method = c('sum'),
+                    feat_type = 'negprobes',
+                    nr_bins = 10,
+                    save_param = list(save_folder = 'niche_plots/', # Create subdirectory
+                           save_name = 'Ext_Data_Fig3e_gem_negprobes_percell',
+                           save_format = 'pdf',
+                           units = 'in'))
+
+### differential expression
+# Ext data fig 3f
+# Gini
+markers = findMarkers_one_vs_all(gobject = gem,
+                                 method = 'gini',
+                                 expression_values = 'normalized',
+                                 cluster_column = 'cell_types',
+                                 min_feats = 1,
+                                 rank_score = 2)
+# First 5 results by cluster
+markers[, head(.SD, 3), by = 'cluster']
+write.csv(markers, paste0(my_working_dir, "de_markers_celltypes_gem.csv"))
+topgini_genes = unique(markers[, head(.SD, 2), by = 'cluster']$feats)
+cluster_order = c( 'B-Cell','plasmablast','Igg rich','endothelial', 'fib','fib_rich','KC1', 'KC2', 'KC3',  'mac','mac rich', 'mast', 'mDC','pDC', 'monocyte', 'neutrophil', 'NK',  'T CD4 mem', 'T CD4 naive', 'T CD8 mem', 'T CD8 naive', 'Treg')
+
+plotMetaDataHeatmap(gem, selected_feats = topgini_genes,
+                    custom_feat_order = unique(markers$feats),
+                    custom_cluster_order = cluster_order,
+                    metadata_cols = c('cell_types'), x_text_size = 10, y_text_size = 10,
+                    save_plot = TRUE,
+                    return_plot = TRUE,
+                    show_plot = TRUE,
+                    save_param = list(save_folder = 'niche_plots/', # Create subdirectory
+                           save_name = 'Ext_Data_Fig3f_heatmap_gini_top2_inf_celltypes_gem',
+                           save_format = 'pdf',
+                           units = 'in'))
+
+
+# plot patient wise cell type cell number data Extended data fig 3g 
+cell_metadata<- pDataDT(gem)
+table(cell_metadata$patient_id, cell_metadata$cell_type)
+
+```
+
+
+
+```{r visualise gem}
+#fig 2a
+
+plotUMAP(gobject = gem,
+         cell_color = 'cell_types', show_center_label =T,cell_color_code=c("mac rich"="#E7298A", "mac"= "#FF7F00","monocyte"= "#FFC0CB", "pDC"= "#FB8072","neutrophil"= "#800000","mDC"= "#A65628", "mast"= "#FFD700", "mDC"= "#A65628","Igg rich"= "#1B9E77", "B-Cell"= "#006400", "plasmablast"= "#00FF00","fib_rich"= "#7FFFD4", "fib"= "#00FFFF","KC1"= "#F5DEB3", "KC2"= "#F0F8FF", "KC3"= "#FFE4E1","endothelial"= "#E41A1C", "Treg"= "#6495ED",  "NK"= "#00BFFF",   "T CD4 mem"= "#8B008B", "T CD4 naive"= "#DDA0DD", "T CD8 mem"= "#000080", "T CD8 naive"= "#ADD8E6"),
+         show_NN_network = F,
+         point_size = 0.3,
+          save_param = list(save_folder = 'niche_plots/', # Create subdirectory
+                           save_name = 'Fig2a_umap_NB_CLUS_clusters',
+                           save_format = 'pdf',
+                           units = 'in'))
+
+
+#fig 2e
+### top ido1 pdl1 expressors
+#subset cell_ids on the basis of column patient_id and create P3 giotto obj
+subset_cell_IDs = cell_metadata[patient_id %in% "P3"]$cell_ID
+P3 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
+
+spatPlot2D(gobject = P3, cell_color = 'clusterf',point_size = 1.0, select_cell_groups = c("moDC3",	"DC3",	"moDC2"), cell_color_code= c("moDC3"="#00BFFF",	"DC3"= "gold1","moDC2"="darkorange4"), other_cell_color = "#F5F5F5", show_legend = TRUE,point_shape = c("no_border"),save_param = list(save_name = 'Fig2e_P3_finalclusterf_ido1_pdl11_topexpressers.pdf', save_folder = 'niche_plots/',save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 8))
+```
+
+
+
+
+
+```{r plotting different cell populations onto space}
+#table(gem@cell_metadata[["rna"]][["cluster"]])
+
+#Extended data figure 4
+# fetch metadata from gem
+cell_metadata = pDataDT(gem)
+
+#subset cell_ids on the basis of column patient_id and create P4 giotto obj
+subset_cell_IDs = cell_metadata[patient_id %in% "P4"]$cell_ID
+P4 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
+
+#subset cell_ids on the basis of column patient_id and create P3 giotto obj
+subset_cell_IDs = cell_metadata[patient_id %in% "P3"]$cell_ID
+P3 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
+
+#subset cell_ids on the basis of column patient_id and create P5 giotto obj
+subset_cell_IDs = cell_metadata[patient_id %in% "P5"]$cell_ID
+P5 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
+
+#subset cell_ids on the basis of column patient_id and create P6 giotto obj
+subset_cell_IDs = cell_metadata[patient_id %in% "P6"]$cell_ID
+P6 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
+# fetch metadata from gem
+cell_metadata = pDataDT(gem)
+
+# #subset cell_ids on the basis of column patient_id and create P1 giotto obj
+# subset_cell_IDs = cell_metadata[patient_id %in% "53i"]$cell_ID
+# P1 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
+
+#subset cell_ids on the basis of column patient_id and create P2 giotto obj
+subset_cell_IDs = cell_metadata[patient_id %in% "P3"]$cell_ID
+P2 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
+
+# #subset cell_ids on the basis of column patient_id and create P3 giotto obj
+# subset_cell_IDs = cell_metadata[patient_id %in% "47i"]$cell_ID
+# P3 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
+# 
+# #subset cell_ids on the basis of column patient_id and create P4 giotto obj
+# subset_cell_IDs = cell_metadata[patient_id %in% "48i"]$cell_ID
+# P4 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
+
+# c("imm_DC1"= "dodgerblue2","CCL18_mac"= "#E31A1C","monocyte"="darkorange4","CXCL3_moDC"="green4","CHI3L1_mac"= "#0000CD","type1IFN_mac"= "purple","MT2A_mono"="#FF7F00" ,"CXCL8_moDC"= "brown","IL1B_mac"= "gold1","imm_DC2" = "#FA8072", "imm_DC3"= "#00BFFF","Neutrophil"= "darkturquoise","SELP_DC"="#FF1493", "mast"="#00FF00" )
+#                     #,"SPP1_mac"= "maroon","Inter_mono"="yellow3", "MT2A_mono"="blue1")
+
+ident_colours = c("inf_mac2_CHI3L1_mac"= "dodgerblue2","inf_mac2_CCL18_mac"= "#E31A1C","moDC2"="darkorange4","inf_mac1"="green4","pDC"= "#0000CD","cDC2"= "purple","moDC1"="#FF7F00" ,"res_mac"= "brown","DC3"= "gold1","neutrophil" = "#FA8072", "DC1"= "darkturquoise","moDC3"="#00BFFF", "mast"="#00FF00")
+
+
+
+spatPlot2D(gobject = P3, cell_color = 'clusterf',point_size = 1.0, select_cell_groups = c("T_CD4_mem", "T_CD8_mem", "NK", "NK_igg"), cell_color_code= c("T_CD4_mem"="#E7298A", "T_CD8_mem"= "green4", "NK" ="purple", "NK_igg" ="purple"), point_shape =c("no_border"), show_legend = TRUE,save_param = list(save_folder = 'niche_plots/', save_name = 'Ext_Data_fig4a_P3_finalclusterfing_T_MEM_NK', save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 8))
+
+spatPlot2D(gobject = P3, cell_color = 'clusterf',point_size = 1.0, select_cell_groups = c("T_CD4_naive", "T_CD8_naive", "Treg"), cell_color_code= c("T_CD4_naive"= "#1B9E77", "T_CD8_naive" = "darkorange4","Treg" ="gold1"), point_shape =c("no_border"), show_legend = TRUE,save_param = list(save_folder = 'niche_plots/', save_name = 'Ext_Data_fig4b_P3_finalclusterfing_T_NAIVE_TREG', save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 8))
+
+# spatPlot2D(gobject = P3, cell_color = 'clusterf',point_size = 1.0, select_cell_groups = c("plasmablast", "plasmablast_cycl", "B-cell"), cell_color_code= c("plasmablast"= "#1B9E77", "plasmablast_cycl" = "darkorange4","B-cell" ="gold1"), point_shape =c("no_border"), show_legend = TRUE,save_param = list(save_folder = 'niche_plots/', save_name = 'Ext_Data_fig4c_P3_finalclusterfing_bcell', save_format = 'pdf',
+#                            units = 'in',
+#                            base_height = 9,
+#                            base_width = 8))
+spatPlot2D(gobject = P3, cell_color = 'clusterf',point_size = 1.0, select_cell_groups = c("plasmablast", "plasmablast_cycl", "B-cell", "plasmablast_igg"), cell_color_code= c("plasmablast"= "#1B9E77", "plasmablast_cycl" = "darkorange4","B-cell" ="gold1", "plasmablast_igg"= "purple"), point_shape =c("no_border"), show_legend = TRUE,save_param = list(save_folder = 'niche_plots/', save_name = 'Ext_Data_fig4c_P3_finalclusterfing_bcell_igg', save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 8))
+
+spatPlot2D(gobject = P3, cell_color = 'clusterf',point_size = 1.0, select_cell_groups = c("fib1", "fib2", "fib3", "fib4"), cell_color_code= c("fib1"= "#1B9E77", "fib2" = "darkorange4","fib3" ="gold1", "fib4"= "purple"), point_shape =c("no_border"), show_legend = TRUE,save_param = list(save_folder = 'niche_plots/', save_name = 'Ext_Data_fig4d_P3_finalclusterfing_fib', save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 8))
+
+spatPlot2D(gobject = P3, cell_color = 'clusterf',point_size = 1.0, select_cell_groups = c("inf_mac2_CCL18_mac","inf_mac2_CHI3L1_mac", "inf_mac1", "res_mac"), cell_color_code= c("inf_mac2_CCL18_mac"="#E31A1C", "inf_mac2_CHI3L1_mac"= "dodgerblue2", "inf_mac1"= "green4", "res_mac" ="brown"), show_legend = TRUE,point_shape = c("no_border"),save_param = list(save_name = 'Ext_Data_fig4e_p2_macs_clusterf', save_folder = 'niche_plots/',save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 8))
+
+
+
+spatPlot2D(gobject = P3, cell_color = 'clusterf',point_size = 1.0, select_cell_groups = c("moDC1","moDC2", "moDC3"), cell_color_code= c("moDC1"="#FF7F00", "moDC2"= "darkorange4", "moDC3" = "#00BFFF"),point_shape = c("no_border"), show_legend = TRUE,save_param = list(save_name = 'Ext_Data_fig4f_p2_finalclusterf_moDC', save_folder = 'niche_plots/',save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 8))
+
+spatPlot2D(gobject = P3, cell_color = 'clusterf',point_size = 1.0, select_cell_groups = c("DC1","cDC2","DC3","pDC"), cell_color_code= c("DC1" ="darkturquoise", "cDC2"= "purple", "DC3"="gold1", "pDC"= "#0000CD"),point_shape = c("no_border"), show_legend = TRUE,save_param = list(save_name = 'Ext_Data_fig4g_p2_finalclusterf_DC', save_folder = 'niche_plots/',save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 8))
+
+# 
+# spatPlot2D(gobject = P3, cell_color = 'clusterf',point_size = 1.0, select_cell_groups = c("neutrophil", "mast"), cell_color_code= c("neutrophil"= "#FA8072", "mast"="#00FF00"), point_shape =c("no_border"), show_legend = TRUE,save_param = list(save_folder = 'niche_plots/', save_name = 'Ext_Data_fig4h_p2_clusterf_neutrophil_mast', save_format = 'pdf',
+#                            units = 'in',
+#                            base_height = 9,
+#                            base_width = 8))
+
+spatPlot2D(gobject = P3, cell_color = 'clusterf',point_size = 1.0, select_cell_groups = c("neutrophil", "mast","neutrophil_igg","mast_igg"), cell_color_code= c("neutrophil"= "#FA8072", "mast"="#00FF00", "neutrophil_igg"="#FA8072", "mast_igg" = "#00FF00"), point_shape =c("no_border"), show_legend = TRUE,save_param = list(save_folder = 'niche_plots/', save_name = 'Ext_Data_fig4h_p2_neutrophil_mast_igg_clusterf', save_format = 'pdf',
+                           units = 'in',
+                           base_height = 9,
+                           base_width = 8))
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
