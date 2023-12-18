@@ -34,7 +34,7 @@ Human cutaneous leishmaniasis (CL) is characterised by chronic skin pathology.  
 2. RAM above 32GB
 
 #### Software
-1. R version 4.1.2 (2021-11-01)
+1. R version 4.1.2 (2021-11-01) and RStudio 2023.09.1 
 2. Packages and versions needed for all Visium based analysis
 > sessionInfo()
 R version 4.1.2 (2021-11-01)
@@ -189,20 +189,19 @@ loaded via a namespace (and not attached):
 
  ### Indian (IN) Post Kala Azar Dermal Leishmaniasis (PKDL) - Visium
 
-    1. in_pkdl_integration.Rmd 
+    9. in_pkdl_integration.Rmd 
          * Uses .h5 files to generate lesion_PKDL_merged.Rds
-    2. in_pkdl_downstream.Rmd
+    10. in_pkdl_downstream.Rmd
          * Uses lesion_PKDL_merged.Rds
 
  ### Brazilian (BZ) Cutaneous Leishmaniasis (CL) - Visium
 
-    1. br_cl_integration.Rmd 
+    11. br_cl_integration.Rmd 
          * Uses .h5 files to generate lesion_BRCL_skin_merged.Rds
-    2. br_cl_downstream.Rmd
+    12. br_cl_downstream.Rmd
          * Uses lesion_BRCL_skin_merged.Rds
 
 
-Colons can be used to align columns.
 
 | Figure number | File name           
 | ------------- |:-------------:|
@@ -280,6 +279,19 @@ Colons can be used to align columns.
 |Suppl. Fig2|sl2_cl_downstream.Rmd|
 |Suppl. Fig 3|cosmx_spatial_plots.Rmd|
 
+###Figure reproduction - Please use option 2 until publication
+Option1 : Start from scratch using raw 10x files (available post publication)
+
+    Download all samples/10x files from GSMXXXX into source/'Visium_slide_name'/
+    Start with sl2_cl_integration.Rmd, in_pkdl_integration.Rmd  or br_cl_integration.Rmd 
+
+Option2 : Start from prepared Rds containing primary clustering analysis
+
+    1. Download all Rds files from Zenodo and keep them in your working folder.
+    2. Open Rmd file as per the figure needed from table above on RStudio. 
+    3. Define working folder in the path (Find instructions in the Rmd file). 
+    4. Create a sub-folder in your wokring path 'R'. All outputs will be saved here
+    5. Run sequentially, chunk by chunk after all requisite packages are installed
 
 
  ### Cell2location: Deconvoluting spatial spots
