@@ -200,3 +200,111 @@ loaded via a namespace (and not attached):
          * Uses .h5 files to generate lesion_BRCL_skin_merged.Rds
     2. br_cl_downstream.Rmd
          * Uses lesion_BRCL_skin_merged.Rds
+
+
+Colons can be used to align columns.
+
+| Figure number | File name           
+| ------------- |:-------------:|
+|1a|Images|
+|1b|Images|
+|1c|sl2_cl_downstream.Rmd|
+|1d|sl2_cl_downstream.Rmd|
+|1e|sl2_cl_downstream.Rmd|
+|1f|sl2_cl_downstream.Rmd|
+|1g|sl2_cl_downstream.Rmd|
+|1i|sl2_cl_downstream.Rmd. Plotted in GraphPad|
+|Ext. 1a|Images|
+|Ext. 1b|Images|
+|Ext. 1c|sl2_cl_downstream.Rmd|
+|Ext. 1d|sl2_cl_downstream.Rmd|
+|Ext. 1e-k|sl2_cl_downstream.Rmd|
+|Ext. 2a|sl2_cl_cell2location.Rmd|
+|Ext. 2b|sl2_cl_cell2location.Rmd. Plotted in GraphPad.|
+|Ext. 2c-l|sl2_cl_cell2location.Rmd|
+|2a|giotto_sl2_config.Rmd|
+|2b|cosmx_spatial_plots.Rmd|
+|2c|cosmx_mac_sub_clustered_downstream.Rmd|
+|2d|cosmx_mac_sub_clustered_downstream.Rmd|
+|2e|giotto_sl2_config.Rmd|Ext 3a|Images|
+|Ext. 3b|giotto_sl2_config.Rmd. Plotted in GraphPad|
+|Ext. 3c|giotto_sl2_config.Rmd|
+|Ext. 3d|giotto_sl2_config.Rmd|
+|Ext. 3e|giotto_sl2_config.Rmd|
+|Ext. 3f|giotto_sl2_config.Rmd|
+|Ext. 3g|giotto_sl2_config.Rmd. Plotted in GraphPad|
+|Ext. 4a-h|giotto_sl2_config.Rmd|
+|Ext. 4i-j|cosmx_mac_sub_clustered_downstream.Rmd|
+|3a|sl2_cl_downstream.Rmd|
+|3b|sl2_cl_downstream.Rmd|
+|3c|sl2_cl_downstream.Rmd. Plotted in GraphPad|
+|3d-k|sl2_cl_downstream.Rmd|
+|Ext 5a|sl2_cl_downstream.Rmd|
+|Ext 5b-d|sl2_cl_cell2location.Rmd|
+|Ext 5e|sl2_cl_downstream.Rmd|
+|Ext 5f-j|sl2_cl_downstream.Rmd|
+|4a|giotto_sl2_downstream.Rmd|
+|4b|giotto_sl2_downstream.Rmd|
+|4c|giotto_sl2_downstream.Rmd|
+|4d|Images|4e|giotto_sl2_downstream.Rmd|
+|4f|giotto_sl2_downstream.Rmd. Analysed in Excel, plotted in GraphPad|
+|4g-l|giotto_sl2_downstream.Rmd|
+|4j|Images|4k|Images|4l-q|giotto_sl2_downstream.Rmd|
+|Ext. 6a-b|giotto_sl2_downstream.Rmd|
+|Ext. 6c|giotto_sl2_downstream.Rmd|
+|Ext. 6d|giotto_sl2_downstream.Rmd|
+|Ext. 6e-f|giotto_sl2_downstream.Rmd|
+|Ext. 6g-h|giotto_sl2_downstream.Rmd|
+|Ext 6 i-j|Images|Ext 6k-l|giotto_sl2_downstream.Rmd|
+|Ext 6m|giotto_sl2_downstream.Rmd|
+|Ext. data 7|GraphPad|5a-d|images|5e|br_cl_downstream.Rmd|
+|5f|in_pkdl_downstream.Rmd|
+|5g|br_cl_downstream.Rmd|
+|5h|br_cl_downstream.Rmd|
+|5i|in_pkdl_downstream.Rmd|
+|5j-k|Data from br_cl_downstream.Rmd,in_pkdl_downstream.Rmd and sl2_cl_downstream.Rmd. Plotted in Venny.|
+|Ext. 8 a-c|Images|
+|Ext.8e-f|br_cl_downstream.Rmd|
+|Ext. 8g|in_pkdl_downstream.Rmd|
+|Ext. 8h|in_pkdl_downstream.Rmd|
+|Ext 8i|br_cl_downstream.Rmd|
+|Ext. 8j|in_pkdl_downstream.Rmd|
+|Ext. 9a|br_cl_downstream.Rmd|
+|Ext. 9b|in_pkdl_downstream.Rmd|
+|Ext. 9c-d|br_cl_downstream.Rmd|
+|Ext. 9e-f|in_pkdl_downstream.Rmd|
+|Ext. 9g-h|br_cl_downstream.Rmd|
+|Ext. 9i-j|br_cl_downstream.Rmd|
+|6a-l|Images|
+|Suppl. Fig1|sl2_cl_downstream.Rmd|
+|Suppl. Fig2|sl2_cl_downstream.Rmd|
+|Suppl. Fig 3|cosmx_spatial_plots.Rmd|
+
+
+
+ ### Cell2location: Deconvoluting spatial spots
+Cell2location v0.1 (https://cell2location.readthedocs.io/en/latest/) was run by following the instructions as per the tool's tutorial for mapping lymph nodes. The code was run on University of York's HPC, namely, Viking using GPU node with 1 GPU, 1 node utilising 40GB RAM in approximately 2.5 hours. 1 hour for reference modelling and 1.5 hours for modelling the spatial data to calculate cell abundances in Visium spots
+
+    Cell2location was installed in its own environment as per the instructions
+    RAW single cell data (10.1126/science.aba6500) and RAW spatial data (this study) was used as input to cell2location
+    Output was stored as a model.pt file and anndata file containing q05 abundances as metadata
+    Python scripts were submitted to a job manager (slurm) on the HPC as a shell script with the following batch parameters and script
+
+    #!/bin/bash #SBATCH --job-name=XXXX #SBATCH --mail-type=END #SBATCH --mail-user=nidhi.dey@york.ac.uk #SBATCH --ntasks=1 #SBATCH --cpus-per-task=1 #SBATCH --mem=40gb #SBATCH --time=04:00:00 #SBATCH --output=cell2loc.log #SBATCH --account=XXXX #SBATCH --partition=gpu #SBATCH --gres=gpu:1
+
+    module load system/CUDA/10.0.130 
+    module load lang/Miniconda3/4.9.2
+
+    source activate cell2loc_env2
+
+    command -v python
+
+    python config.py
+
+    source deactivate
+
+    Abundances can be accessed from the final python object as metadata
+
+    adata_vis.obs[adata_vis.uns['mod']['factor_names']] = adata_vis.obsm['q05_cell_abundance_w_sf']
+
+    You can write this as a CSV file to explore abundances further.
