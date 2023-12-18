@@ -1,0 +1,257 @@
+---
+title: "Spatial analysis"
+output: rmarkdown::html_vignette
+vignette: >
+  %/VignetteIndexEntry{introduction}
+  %/VignetteEngine{knitr::rmarkdown}
+  %/VignetteEncoding{UTF-8}
+---
+Please install the following dependencies before running the analysis
+```{r message=FALSE}
+library(Seurat)
+library(dplyr)
+library(sqldf)
+library(ggplot2)
+library(patchwork)
+library(RColorBrewer)
+library(ggpubr)
+
+library(spatstat)
+library(gplots)
+library(corrplot)
+library(stringr)
+
+library(VennDiagram)
+library(grid)#for printing PDFs off finder makrer
+DiscretePalette(40, palette = "polychrome")
+library(reshape2)
+library(ggplot2)
+
+#ADD YOUR STUDY NAME HERE
+study_name<-"human_BRCL_Visium"
+#PLEASE ADD YOUR WORKING PATH HERE
+study_path<-"your_path_here/"
+#MAKE A LIST OF SAMPLES THAT YOU WILL BE ANALYSING
+samples <-c("002","009","010", "006")
+
+#CREATE A FOLDER WITHIN 'study_path' as 'R'. ALL ANALYSIS WILL BE STORED HERE
+save_path<-paste0(study_path,"R/")
+save_on<-1
+
+```
+START HERE IF PREVIOUS ANALYSIS IS COMPLETE. SIMPLY READ THE RDS OBJECT.
+```{r read_RDS_if_available}
+BRCL_merged <- readRDS(paste0(save_path, "lesion_BRCL_skin_merged.Rds"))
+```
+
+PLOT FIGURES
+```{r cytokines in ido1 pdl1 areas}
+DefaultAssay(BRCL_merged)<- "SCT"
+
+
+#FIGURE 5e and extended data fig. 8e-f  9
+int.genes <- c("IDO1", "CD274", "CXCL9","IL32")
+#EXT DATA FIGURE 5 & 6
+for (genes in int.genes){
+  pdf(paste0(save_path, "Fig5e_Ext_Data_Fig8e-f_9c-d_Spatial_feature_int_genes_", genes, "mincutoff0.pdf"))
+    x<-SpatialFeaturePlot(BRCL_merged, features = genes, alpha = c(0, 0), crop = FALSE, pt.size.factor = 1)
+    y<-SpatialFeaturePlot(BRCL_merged, features = genes, alpha = c(1, 0), crop = FALSE, pt.size.factor = 1, min.cutoff = 0)
+      print(x[[1]]+y[[1]])
+      print(x[[2]]+y[[2]])
+      print(x[[3]]+y[[3]])
+      print(x[[4]]+y[[4]]) 
+  dev.off()
+}
+
+#FIGURE 5g
+pdf(paste0(save_path, "Fig5g_pdl1_ido1_overall_scatter.pdf"), height = 5, width=5)
+FeatureScatter(BRCL_merged, feature1 = "IDO1", feature2 = "CD274", cols = rep("black",12), jitter=3) + NoLegend() + geom_vline(aes(xintercept = 0.5), col = "red", size = 0.3) + geom_hline(aes(yintercept = 0.2), col = "red", size = 0.1)
+dev.off()
+
+#Figure 5h Ext Data Fig. 8i
+BRCL_merged$ido1pdl1 <- "rest_of_the_spots"
+BRCL_merged$spot_id<-rownames(BRCL_merged@meta.data)
+AverageExpression(BRCL_merged, features = c("IDO1", "CD274"), group.by = "orig.ident")
+
+ido1_spots<-WhichCells(BRCL_merged, expression = IDO1 > 0.5 & CD274 < 0.5)
+ido1_pdl1_spots<-WhichCells(BRCL_merged, expression = IDO1 > 0.5 & CD274 > 0.5)
+pdl1_spots<-WhichCells(BRCL_merged, expression = IDO1 < 0.5 & CD274 > 0.5)
+
+BRCL_merged@meta.data$ido1pdl1[BRCL_merged@meta.data$spot_id %in% ido1_spots] <- "ido1_spots"
+BRCL_merged@meta.data$ido1pdl1[BRCL_merged@meta.data$spot_id %in% ido1_pdl1_spots] <- "ido1_pdl1_spots"
+BRCL_merged@meta.data$ido1pdl1[BRCL_merged@meta.data$spot_id %in% pdl1_spots] <- "pdl1_spots"
+
+BRCL_merged<- SetIdent(object = BRCL_merged, value = "ido1pdl1")
+ido1pdl1markergenes<- FindAllMarkers(BRCL_merged,assay = "SCT",min.pct = 0.2,logfc.threshold = 0.2)
+sig_ido1pdl1markergenes<- subset(ido1pdl1markergenes, subset = p_val_adj < 0.05)
+write.csv(sig_ido1pdl1markergenes, paste0(save_path, "ido1pdl1markergenes_padj0.05.csv"))
+
+pdf(paste0(save_path, "Fig5h_Ext_Data_Fig8i_ido1_pdl1_spatialplot_ido1dot5pdl1dot1.pdf"), height = 5, width=5)  
+  x<- SpatialPlot(BRCL_merged, group.by= "ido1pdl1", image.alpha = 0.3, crop = F, pt.size.factor = 1, cols = c("ido1_spots"="#6495ED","ido1_pdl1_spots" = "#FF1493","pdl1_spots"= "#FFA500","rest_of_the_spots" = "#E6E6FA"))
+ for(i in 1:3){
+    print(x[[i]])
+  }
+ dev.off()
+
+##Extended Data Fig. 9a
+#preparing chemokine, tnfs and interferon lists that significantly vary between
+#ido1 pdl1 spots
+ccl_genes<-grep(pattern = "^CCL", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+cx_genes<-grep(pattern = "^CX", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+ccr_genes<-grep(pattern = "^CCR", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+
+chemokines <- c(ccl_genes, cx_genes, ccr_genes)
+chemokines <- sort(chemokines)
+chemokines <- unique(chemokines)
+interleukins<-grep(pattern = "^IL", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+interleukins <- sort(interleukins)
+interleukins <- unique(interleukins)
+
+interferons <- grep(pattern = "^IFN", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+tnfs <-grep(pattern = "^TNF", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+tgfs <-grep(pattern = "^TGF", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+
+inf_tnf_tgf <- c(interferons, tnfs, tgfs)
+inf_tnf_tgf <- sort(inf_tnf_tgf)
+inf_tnf_tgf <- unique(inf_tnf_tgf)
+
+####added few checkpoints DE between spot types
+inf_tnf_tgf_icg <- append(inf_tnf_tgf, values = c("LAG3","CD40","PDCD1LG2", "CD86", "CD209", "CD96"))
+
+pdf(paste0(save_path, "Ext_Data_Fig9a_BRCL_merged_allPid_ido1_pdl1_spots_dot_plots_chemokines.pdf"))
+  x<-DotPlot(BRCL_merged, features = chemokines, group.by = "ido1pdl1", scale = TRUE, scale.min = 0, scale.max =100, col.min = 0, col.max = 1.5) + 
+     RotatedAxis() + 
+     coord_flip() + 
+     theme(axis.title.x=element_blank(), axis.title.y=element_blank()) 
+  figure1 <- ggarrange(x,ncol = 1,nrow = 1)
+  print(figure1)
+dev.off()
+
+pdf(paste0(save_path, "Ext_Data_Fig9a_BRCL_merged_IDO1PDL1_dot_plots_interleukins.pdf"))
+  x<-DotPlot(BRCL_merged, features = interleukins, group.by = "ido1pdl1", scale = TRUE, scale.min = 0, scale.max = 100, col.min = 0, col.max = 1.5) + RotatedAxis() + coord_flip() + theme(axis.title.x=element_blank(),axis.title.y=element_blank()) 
+  figure1 <- ggarrange(x,ncol = 1,nrow = 1)
+  print(figure1)
+dev.off()
+
+pdf(paste0(save_path, "Ext_Data_Fig9a_BRCL_merged_IDO1PDL1_dot_plots_DE_inf_tnf_tgf_icg.pdf"))
+  x<-DotPlot(BRCL_merged, features = inf_tnf_tgf_icg, group.by = "ido1pdl1", scale = TRUE, scale.min = 0, scale.max = 100, col.min = 0, col.max = 1.5) + RotatedAxis() + coord_flip() + theme(axis.title.x=element_blank(),axis.title.y=element_blank()) 
+  figure1 <- ggarrange(x,ncol = 1,nrow = 1)
+  print(figure1)
+dev.off()
+
+```
+
+CALCULATE IDO1 and PDL1 correlations
+```{r warning=FALSE}
+###Extended Data Fig. 9g-h
+
+######
+#function correlation
+######
+fn_get_corr_mat <- function(obj, gene_name){
+  correlation_df_list<-list()
+
+  mat_count<-as.matrix(obj[['SCT']]@data)
+
+  type<-"spearman"
+
+  #get 'gene of interest' expression of all cells
+  count_gene<-mat_count[gene_name,]
+
+  correlation_mat<-matrix(nrow = dim(mat_count)[1], ncol = 2)
+  #add rownames
+  rownames(correlation_mat) <- rownames(mat_count)
+  # Create a nested loop
+  for(row in 1:nrow(mat_count)) {
+    correlation<-stats::cor.test(count_gene, mat_count[row,], method = type)
+    correlation_mat[row,1]<-correlation$estimate
+    correlation_mat[row,2]<-correlation$p.value
+  }
+  correlation_mat<-as.data.frame(correlation_mat)
+  colnames(correlation_mat)<-c("corr_estimate","pvalue")
+  correlation_mat$gene<-rownames(correlation_mat)
+  #discard pvalues greater than 0.05 and correlations below 0.1
+  correlation_df<-sqldf::sqldf("SELECT gene, corr_estimate, pvalue
+                                FROM correlation_mat
+                                WHERE pvalue < 0.05
+                                AND corr_estimate > 0.1
+                                ORDER BY corr_estimate DESC")
+
+  anti_correlation_df<-sqldf::sqldf("SELECT gene, corr_estimate, pvalue
+                                FROM correlation_mat
+                                WHERE pvalue < 0.05
+                                AND corr_estimate < -0.1
+                                ORDER BY corr_estimate ASC")
+  #write.table(correlation_mat, file = paste0(exp_path, "All_CD8_T_PBMC_Malat1_Vs_allGene_flu_corr.csv"), sep=",")
+  correlation_df_list[[paste0("corr_", gene_name)]]<-correlation_df
+  correlation_df_list[[paste0("acorr_", gene_name)]]<-anti_correlation_df
+  list_corr_mat <- correlation_df_list
+  return(list_corr_mat)
+}
+
+#code to run the function for PDL1##################################################
+gene_name<-"CD274"
+# Start the clock!
+ptm <- proc.time()
+
+list_corr_mat <-fn_get_corr_mat(BRCL_merged, gene_name)
+
+# Stop the clock
+time_taken<- proc.time() - ptm
+
+print(paste0("Time elapsed: ", sprintf((time_taken[3]/60), fmt = '%#.2f')," minutes"))
+
+head(list_corr_mat[[paste0("corr_", gene_name)]],20)
+head(list_corr_mat[[paste0("acorr_", gene_name)]],20)
+
+write.table(list_corr_mat[[paste0("corr_", gene_name)]], file = paste0(save_path,"all_corr_",gene_name,".csv"), sep=",", row.names = FALSE)
+
+write.table(list_corr_mat[[paste0("acorr_", gene_name)]], file = paste0(save_path, "all_acorr_",gene_name,".csv"), sep=",", row.names = FALSE)
+
+rm(list_corr_mat)
+####################################################################################
+#code to run the function for IDO1 #################################################
+gene_name<-"IDO1"
+# Start the clock!
+ptm <- proc.time()
+
+list_corr_mat <-fn_get_corr_mat(BRCL_merged, gene_name)
+
+# Stop the clock
+time_taken<- proc.time() - ptm
+print(paste0("Time elapsed: ", sprintf((time_taken[3]/60), fmt = '%#.2f')," minutes"))
+
+head(list_corr_mat[[paste0("corr_", gene_name)]],20)
+head(list_corr_mat[[paste0("acorr_", gene_name)]],20)
+
+write.table(list_corr_mat[[paste0("corr_", gene_name)]], file = paste0(save_path,"all_corr_",gene_name,".csv"), sep=",", row.names = FALSE)
+
+write.table(list_corr_mat[[paste0("acorr_", gene_name)]], file = paste0(save_path, "all_acorr_",gene_name,".csv"), sep=",", row.names = FALSE)
+
+rm(list_corr_mat)
+####################################################################################
+##Example plots
+ido1_df<- data.frame(corr= c(0.623106331,0.557900835,0.549726223,0.537608263,0.530873838,0.527411478,0.52119921,0.4895061,0.489269478,0.485501278
+), gene=c("CXCL9","IL32","GZMB","WARS","GNLY","GBP5","UBD","MT2A","LYZ","CCL5"))
+pdl1_df<- data.frame(corr= c(0.260097085,0.254758584,0.249635036,0.246589637,0.245534268,0.245018546,0.244698654,0.244151942,0.243109262,0.23955887), gene=c("SOD2","IDO1","CXCL9","GBP5", "MT2A","WARS","UBD","LYZ","IL32","FTH1"))
+
+pdf(paste0(save_path,"Ext_Data_Fig9g-h_barplot_correlations_ido1_pdl1.pdf"))
+p<-ggplot(data=ido1_df, aes(x = reorder(gene, +corr), y=corr)) +
+  geom_bar(stat="identity") + ylim(c(0,1))
+p + coord_flip()
+print(p)
+q<-ggplot(data=pdl1_df, aes(x = reorder(gene, +corr), y=corr)) +
+  geom_bar(stat="identity") + ylim(c(0,1))
+q + coord_flip()
+print(q)
+dev.off()
+```
+
+
+
+
+
+
+
+
+
