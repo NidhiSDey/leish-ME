@@ -170,6 +170,17 @@ loaded via a namespace (and not attached):
 
     1. sl2_cl_integration.Rmd 
     2. sl2_cl_downstream.Rmd
-         * with47_48_integrated_nd2117slcl_dims15_res0.9_prepsct.rds
+         * Uses: with47_48_integrated_nd2117slcl_dims15_res0.9_prepsct.rds
     3. sl2_cl_cell2location.Rmd
+         * Uses: with47_48_integrated_nd2117slcl_dims15_res0.9_prepsct.rds
+
+### Sri Lankan (SL) Cutaneous Leishmaniasis (CL) - CosMx
+
+    4. giotto_sl2_config.Rmd 
+         * Uses: complete_giotto_object_PostAnalysis.RData
+    5. sl2_cl_downstream.Rmd
          * with47_48_integrated_nd2117slcl_dims15_res0.9_prepsct.rds
+    6. sl2_cl_cell2location.Rmd
+         * with47_48_integrated_nd2117slcl_dims15_res0.9_prepsct.rds
+    7. 
+    8. 
