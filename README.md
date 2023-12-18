@@ -178,9 +178,25 @@ loaded via a namespace (and not attached):
 
     4. giotto_sl2_config.Rmd 
          * Uses: complete_giotto_object_PostAnalysis.RData
-    5. sl2_cl_downstream.Rmd
-         * with47_48_integrated_nd2117slcl_dims15_res0.9_prepsct.rds
-    6. sl2_cl_cell2location.Rmd
-         * with47_48_integrated_nd2117slcl_dims15_res0.9_prepsct.rds
-    7. 
-    8. 
+    5. giotto_sl2_downstream.Rmd
+         * Dependent on giotto_sl2_config.Rmd
+    6. cosmx_mac_sub_clustering.Rmd
+         * Uses: SL2_seurat_object.Rds
+    7. cosmx_mac_sub_clustered_downstream.Rmd
+         * Uses: cosmx_myeloid_clusterf.Rds
+    8. cosmx_spatial_plots.Rmd 
+         * cosmx_clusterf.Rds
+
+ ### Indian (IN) Post Kala Azar Dermal Leishmaniasis (PKDL) - Visium
+
+    1. in_pkdl_integration.Rmd 
+         * Uses .h5 files to generate lesion_PKDL_merged.Rds
+    2. in_pkdl_downstream.Rmd
+         * Uses lesion_PKDL_merged.Rds
+
+ ### Brazilian (BZ) Cutaneous Leishmaniasis (CL) - Visium
+
+    1. br_cl_integration.Rmd 
+         * Uses .h5 files to generate lesion_BRCL_skin_merged.Rds
+    2. br_cl_downstream.Rmd
+         * Uses lesion_BRCL_skin_merged.Rds
