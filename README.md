@@ -33,3 +33,57 @@ Human cutaneous leishmaniasis (CL) is characterised by chronic skin pathology.  
 #### Suggested computing requirements: 
 1. Processor 3 GHz and above
 2. RAM above 32GB
+
+#### Software
+1. R version 4.1.2 (2021-11-01)
+2. Packages and versions needed for all Visium based analysis
+> sessionInfo()
+R version 4.1.2 (2021-11-01)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 22.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.10.0
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.10.0
+
+locale:
+ [1] LC_CTYPE=en_GB.UTF-8       LC_NUMERIC=C               LC_TIME=en_GB.UTF-8        LC_COLLATE=en_GB.UTF-8     LC_MONETARY=en_GB.UTF-8   
+ [6] LC_MESSAGES=en_GB.UTF-8    LC_PAPER=en_GB.UTF-8       LC_NAME=C                  LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_GB.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] grid      stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] reshape2_1.4.4         VennDiagram_1.7.3      futile.logger_1.4.3    stringr_1.5.0          corrplot_0.92          gplots_3.1.3          
+ [7] spatstat_3.0-7         spatstat.linnet_3.1-3  spatstat.model_3.2-8   rpart_4.1.16           spatstat.explore_3.2-5 nlme_3.1-155          
+[13] spatstat.random_3.2-1  spatstat.geom_3.2-7    spatstat.data_3.0-3    ggpubr_0.6.0           RColorBrewer_1.1-3     patchwork_1.1.3       
+[19] ggplot2_3.4.4          sqldf_0.4-11           RSQLite_2.3.2          gsubfn_0.7             proto_1.0.0            dplyr_1.1.3           
+[25] SeuratObject_5.0.0     Seurat_4.4.0          
+
+loaded via a namespace (and not attached):
+  [1] backports_1.4.1       spam_2.10-0           plyr_1.8.9            igraph_1.5.1          lazyeval_0.2.2        sp_2.1-1             
+  [7] splines_4.1.2         listenv_0.9.0         scattermore_1.2       digest_0.6.33         htmltools_0.5.6.1     fansi_1.0.5          
+ [13] magrittr_2.0.3        memoise_2.0.1         tensor_1.5            cluster_2.1.2         ROCR_1.0-11           limma_3.50.3         
+ [19] globals_0.16.2        matrixStats_1.0.0     spatstat.sparse_3.0-3 colorspace_2.1-0      blob_1.2.4            ggrepel_0.9.4        
+ [25] xfun_0.41             crayon_1.5.2          tcltk_4.1.2           jsonlite_1.8.7        progressr_0.14.0      survival_3.2-13      
+ [31] zoo_1.8-12            glue_1.6.2            polyclip_1.10-6       gtable_0.3.4          leiden_0.4.3          car_3.1-2            
+ [37] future.apply_1.11.0   abind_1.4-5           scales_1.2.1          futile.options_1.0.1  DBI_1.1.3             rstatix_0.7.2        
+ [43] miniUI_0.1.1.1        Rcpp_1.0.11           viridisLite_0.4.2     xtable_1.8-4          reticulate_1.34.0     bit_4.0.5            
+ [49] dotCall64_1.1-0       htmlwidgets_1.6.2     httr_1.4.7            ellipsis_0.3.2        ica_1.0-3             farver_2.1.1         
+ [55] pkgconfig_2.0.3       uwot_0.1.16           deldir_1.0-9          utf8_1.2.4            labeling_0.4.3        tidyselect_1.2.0     
+ [61] rlang_1.1.1           later_1.3.1           munsell_0.5.0         tools_4.1.2           cachem_1.0.8          cli_3.6.1            
+ [67] generics_0.1.3        broom_1.0.5           ggridges_0.5.4        evaluate_0.23         fastmap_1.1.1         yaml_2.3.7           
+ [73] goftest_1.2-3         knitr_1.45            bit64_4.0.5           fitdistrplus_1.1-11   caTools_1.18.2        purrr_1.0.2          
+ [79] RANN_2.6.1            pbapply_1.7-2         future_1.33.0         mime_0.12             formatR_1.14          compiler_4.1.2       
+ [85] rstudioapi_0.15.0     plotly_4.10.3         png_0.1-8             ggsignif_0.6.4        spatstat.utils_3.0-4  tibble_3.2.1         
+ [91] stringi_1.7.12        lattice_0.20-45       Matrix_1.6-1.1        vctrs_0.6.4           pillar_1.9.0          lifecycle_1.0.3      
+ [97] lmtest_0.9-40         RcppAnnoy_0.0.21      data.table_1.14.8     cowplot_1.1.1         bitops_1.0-7          irlba_2.3.5.1        
+[103] httpuv_1.6.12         R6_2.5.1              promises_1.2.1        KernSmooth_2.23-20    gridExtra_2.3         parallelly_1.36.0    
+[109] codetools_0.2-18      lambda.r_1.2.4        MASS_7.3-55           gtools_3.9.4          chron_2.3-61          withr_2.5.2          
+[115] sctransform_0.4.1     mgcv_1.8-39           parallel_4.1.2        tidyr_1.3.0           rmarkdown_2.25        carData_3.0-5        
+[121] Rtsne_0.16            shiny_1.7.5.1   
+
+3. Giotto - Requires specific commit installation: Please use the following link to run directly on R; depends on the remotes library: remotes::install_github("RubD/Giotto@0c8c2866e881b1c6b35ddc97c24dcb58b555c375")
+   
+
