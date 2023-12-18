@@ -1,0 +1,270 @@
+---
+title: "introduction"
+output: rmarkdown::html_vignette
+vignette: >
+  %/VignetteIndexEntry{introduction}
+  %/VignetteEngine{knitr::rmarkdown}
+  %/VignetteEncoding{UTF-8}
+---
+
+```{r message=FALSE}
+library(Seurat)
+library(dplyr)
+library(sqldf)
+library(ggplot2)
+library(patchwork)
+library(RColorBrewer)
+library(ggpubr)
+
+library(spatstat)
+library(gplots)
+library(corrplot)
+library(stringr)
+
+library(VennDiagram)
+library(grid)#for printing PDFs off finder makrer
+DiscretePalette(40, palette = "polychrome")
+library(reshape2)
+library(ggplot2)
+
+study_name<-"human_PKDL_Visium"
+#PLEASE ADD YOUR WORKING PATH HERE
+study_path<-"your_path_here/"
+
+samples <-c("543", "575")
+sample_label <-c("P1","P2")
+
+#ADD GROUPS IF ANY
+sample_group <-c("Poly", "Mac")
+#Create a sub-folder in your 
+#work path where all outputs
+#will be stored
+save_path<-paste0(study_path,"R/")
+save_on<-1
+
+```
+#read available rds
+```{r read_RDS_if_available}
+PKDL_merged <- readRDS(paste0(save_path, "lesion_PKDL_merged.Rds"))
+```
+
+```{r}
+DefaultAssay(PKDL_merged)<- "SCT"
+
+#Figure 5f, extended data fig. 8g and 9e-f
+gene_list <- c("IDO1", "CD274", "CXCL9","IL32")
+for (gene in gene_list){
+  #feature <- top.features[spatial_feature]
+  pdf(paste0(save_path, "Fig5f_Ext_Data_Fig9e-f_8g_Spatial_feature_", gene, ".pdf"))
+    x<-SpatialFeaturePlot(PKDL_merged, features = gene, alpha = c(0, 0), crop = TRUE, pt.size.factor = 3)
+    y<-SpatialFeaturePlot(PKDL_merged, features = gene, alpha = c(5, 5), crop = T, pt.size.factor = 3, min.cutoff = 0)
+  dev.off()
+}
+```
+
+```{r cytokines in ido1 pdl1 areas}
+
+
+###### Extended Data Fig. 8h
+
+pdf(paste0(save_path, "Ext_Data_Fig8h_pdl1_ido1_overall_scatter.pdf"), height = 5, width=5)
+ FeatureScatter(PKDL_merged, feature1 = "IDO1", feature2 = "CD274", cols = rep("black",10), jitter=3) + NoLegend() + geom_vline(aes(xintercept = 0.2), col = "red", size = 0.3) + geom_hline(aes(yintercept = 0.2), col = "red", size = 0.3)
+dev.off()
+
+#### Extended Data fig. 8j and Fig. 5i
+
+PKDL_merged$ido1pdl1 <- "rest_of_the_spots"
+PKDL_merged$spot_id<-rownames(PKDL_merged@meta.data)
+AverageExpression(PKDL_merged, features = c("IDO1", "CD274"), group.by = "orig.ident")
+
+ido1_spots<-WhichCells(PKDL_merged, expression = IDO1 > 0.01 & CD274 < 0.01)
+ido1_pdl1_spots<-WhichCells(PKDL_merged, expression = IDO1 > 0.01 & CD274 > 0.01)
+pdl1_spots<-WhichCells(PKDL_merged, expression = IDO1 < 0.01 & CD274 > 0.01)
+
+PKDL_merged@meta.data$ido1pdl1[PKDL_merged@meta.data$spot_id %in% ido1_spots] <- "ido1_spots"
+PKDL_merged@meta.data$ido1pdl1[PKDL_merged@meta.data$spot_id %in% ido1_pdl1_spots] <- "ido1_pdl1_spots"
+PKDL_merged@meta.data$ido1pdl1[PKDL_merged@meta.data$spot_id %in% pdl1_spots] <- "pdl1_spots"
+
+PKDL_merged<- SetIdent(object = PKDL_merged, value = "ido1pdl1")
+
+
+pdf(paste0(save_path, "Fig5i_Ext_Data_Fig8j_ido1_pdl1_spatialplot_ido1dot5pdl1dot1.pdf"), height = 5, width=5)  
+  x<- SpatialPlot(PKDL_merged, group.by= "ido1pdl1", image.alpha = 0.3, crop = T, pt.size.factor = 3, cols = c("ido1_spots"="#6495ED","ido1_pdl1_spots" = "#FF1493","pdl1_spots"= "#FFA500","rest_of_the_spots" = "#E6E6FA"))
+ for(i in 1:2){
+    #fig1<-
+    #print(ggarrange(fig1,fig2, ncol = 1))
+    print(x[[i]])
+  }
+ dev.off()
+
+
+
+# EXT. DATA FIGURE 9b
+ PKDL_merged<-PrepSCTFindMarkers(PKDL_merged)
+ido1pdl1markergenes<- FindAllMarkers(PKDL_merged,assay = "SCT",min.pct = 0.2,logfc.threshold = 0.2)
+#sig_ido1pdl1markergenes<- subset(ido1pdl1markergenes, subset = p_val_adj < 0.01)
+sig_ido1pdl1markergenes<- subset(ido1pdl1markergenes, subset = p_val_adj < 0.05)
+write.csv(sig_ido1pdl1markergenes, paste0(save_path, "ido1pdl1markergenes_padj0.01.csv"))
+ 
+#  
+# ccl_genes<-grep(pattern = "^CCL", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+# cx_genes<-grep(pattern = "^CX", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+# ccr_genes<-grep(pattern = "^CCR", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+# 
+# chemokines <- c(ccl_genes, cx_genes, ccr_genes)
+# chemokines <- sort(chemokines)
+# chemokines <- unique(chemokines)
+# 
+# pdf(paste0(save_path, "ido1_pdl1_spots_dot_plots_DE_chemokines.pdf"))
+# x<-DotPlot(PKDL_merged, features = chemokines, group.by = "ido1pdl1", scale = TRUE, scale.min = 0, scale.max =100, col.min = 0, col.max = 1.5) + RotatedAxis() + coord_flip() + theme(axis.title.x=element_blank(),axis.title.y=element_blank()) 
+#   figure2 <- ggarrange(x,ncol = 1,nrow = 1)
+#   print(figure2)
+# dev.off()
+# 
+# interleukins<-grep(pattern = "^IL", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+# interleukins <- sort(interleukins)
+# interleukins <- unique(interleukins)
+# 
+# 
+# pdf(paste0(save_path, "PKDL_merged_IDO1PDL1_dot_plots_DE_interleukins.pdf"))
+#   x<-DotPlot(PKDL_merged, features = head(interleukins), group.by = "ido1pdl1", scale = TRUE) + RotatedAxis() + coord_flip() + theme(axis.title.x=element_blank(),axis.title.y=element_blank()) + NoLegend()
+#   
+#   figure1 <- ggarrange(x,ncol = 2,nrow = 1)
+#   
+#   print(figure1)
+# 
+# dev.off()
+# 
+# 
+# interferons <- grep(pattern = "^IFN", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+# tnfs <-grep(pattern = "^TNF", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+# tgfs <-grep(pattern = "^TGF", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+# 
+# inf_tnf_tgf <- c(interferons, tnfs, tgfs)
+# inf_tnf_tgf <- sort(inf_tnf_tgf)
+# inf_tnf_tgf <- unique(inf_tnf_tgf)
+# 
+# pdf(paste0(save_path, "PKDL_merged_IDO1PDL1_dot_plots_DE_inf_tnf_tgf.pdf"))
+#   x<-DotPlot(PKDL_merged, features = head(inf_tnf_tgf), group.by = "ido1pdl1", scale = TRUE) + RotatedAxis() + coord_flip() + theme(axis.title.x=element_blank(),axis.title.y=element_blank()) + NoLegend()
+#   figure1 <- ggarrange(x,ncol = 2,nrow = 1)
+#   print(figure1)
+# dev.off()
+# 
+# immune_checks <- c("LAG3", "CD40","IDO1", "LILRB4", "CD274")
+
+### Genes filtered in the above commented code are hard coded in the following lines for brevity.
+
+pdf(paste0(save_path, "Ext_Data_Fig9b_pkdl_skin_merged_IDO1PDL1_dot_plots_figure5_de.pdf"),7,6)
+  x<-DotPlot(PKDL_merged, features = c("CCL4", "CCL2", "CCL5","CXCL10", "CXCL11","CXCL13", "CXCL9", "CXCR4", "IL10RA","IL2RG", "IL32", "IFNG","TGFBRAP1", "TNFAIP2","TNFRSF9","LAG3","CD40", "LILRB4"), group.by = "ido1pdl1", scale = TRUE, scale.min = 0, scale.max =100, col.min = 0, col.max = 1.5) + RotatedAxis() + coord_flip() + theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+  figure5 <- ggarrange(x,ncol = 1,nrow = 1)
+  print(figure5)
+dev.off()
+```
+
+```{r}
+###### Extended Data Fig. 9 i,j
+#function correlation
+######
+fn_get_corr_mat <- function(obj, gene_name){
+  correlation_df_list<-list()
+
+
+  mat_count<-as.matrix(obj[['SCT']]@data)
+
+  #search correlations for first lincRNA only - hardcoded atm
+  #gene_name<-X[1]
+  type<-"spearman"
+
+  #get 'gene of interest' expression of all cells
+  count_gene<-mat_count[gene_name,]
+
+  correlation_mat<-matrix(nrow = dim(mat_count)[1], ncol = 2)
+  #add rownames
+  rownames(correlation_mat) <- rownames(mat_count)
+  # Create a nested loop
+  for(row in 1:nrow(mat_count)) {
+    correlation<-stats::cor.test(count_gene, mat_count[row,], method = type)
+    correlation_mat[row,1]<-correlation$estimate
+    correlation_mat[row,2]<-correlation$p.value
+  }
+  correlation_mat<-as.data.frame(correlation_mat)
+  colnames(correlation_mat)<-c("corr_estimate","pvalue")
+  correlation_mat$gene<-rownames(correlation_mat)
+  #discard pvalues greater than 0.05 and correlations below 0.1
+  correlation_df<-sqldf::sqldf("SELECT gene, corr_estimate, pvalue
+                                FROM correlation_mat
+                                WHERE pvalue < 0.05
+                                AND corr_estimate > 0.1
+                                ORDER BY corr_estimate DESC")
+
+  anti_correlation_df<-sqldf::sqldf("SELECT gene, corr_estimate, pvalue
+                                FROM correlation_mat
+                                WHERE pvalue < 0.05
+                                AND corr_estimate < -0.1
+                                ORDER BY corr_estimate ASC")
+  #write.table(correlation_mat, file = paste0(exp_path, "All_CD8_T_PBMC_Malat1_Vs_allGene_flu_corr.csv"), sep=",")
+  correlation_df_list[[paste0("corr_", gene_name)]]<-correlation_df
+  correlation_df_list[[paste0("acorr_", gene_name)]]<-anti_correlation_df
+  list_corr_mat <- correlation_df_list
+  return(list_corr_mat)
+}
+
+#code to run the function for PDL1##################################################
+gene_name<-c("CD274")
+# Start the clock!
+ptm <- proc.time()
+
+list_corr_mat <-fn_get_corr_mat(PKDL_merged, gene_name)
+
+# Stop the clock
+time_taken<- proc.time() - ptm
+
+print(paste0("Time elapsed: ", sprintf((time_taken[3]/60), fmt = '%#.2f')," minutes"))
+
+head(list_corr_mat[[paste0("corr_", gene_name)]],20)
+head(list_corr_mat[[paste0("acorr_", gene_name)]],20)
+list_corr_mat[[paste0("corr_", gene_name)]]$padjvalue<-p.adjust(list_corr_mat[[paste0("corr_", gene_name)]]$pvalue, method = "fdr")
+list_corr_mat[[paste0("acorr_", gene_name)]]$padjvalue<-p.adjust(list_corr_mat[[paste0("acorr_", gene_name)]]$pvalue, method = "fdr")
+write.table(list_corr_mat[[paste0("corr_", gene_name)]], file = paste0(save_path,"all_corr_",gene_name,".csv"), sep=",", row.names = FALSE)
+write.table(list_corr_mat[[paste0("acorr_", gene_name)]], file = paste0(save_path, "all_acorr_",gene_name,".csv"), sep=",", row.names = FALSE)
+
+rm(list_corr_mat)
+##################################################
+#code to run the function for IDO1##################################################
+gene_name<-c("IDO1")
+# Start the clock!
+ptm <- proc.time()
+
+list_corr_mat <-fn_get_corr_mat(PKDL_merged, gene_name)
+
+# Stop the clock
+time_taken<- proc.time() - ptm
+
+print(paste0("Time elapsed: ", sprintf((time_taken[3]/60), fmt = '%#.2f')," minutes"))
+
+head(list_corr_mat[[paste0("corr_", gene_name)]],20)
+head(list_corr_mat[[paste0("acorr_", gene_name)]],20)
+list_corr_mat[[paste0("corr_", gene_name)]]$padjvalue<-p.adjust(list_corr_mat[[paste0("corr_", gene_name)]]$pvalue, method = "fdr")
+list_corr_mat[[paste0("acorr_", gene_name)]]$padjvalue<-p.adjust(list_corr_mat[[paste0("acorr_", gene_name)]]$pvalue, method = "fdr")
+write.table(list_corr_mat[[paste0("corr_", gene_name)]], file = paste0(save_path,"all_corr_",gene_name,".csv"), sep=",", row.names = FALSE)
+write.table(list_corr_mat[[paste0("acorr_", gene_name)]], file = paste0(save_path, "all_acorr_",gene_name,".csv"), sep=",", row.names = FALSE)
+
+rm(list_corr_mat)
+##################################################
+###Example bar plot
+ido1_df<- data.frame(corr= c(0.623106331,0.557900835,0.549726223,0.537608263,0.530873838,0.527411478,0.52119921,0.4895061,0.489269478,0.485501278), gene=c("CXCL9","LYZ","HLA-DRA","CST7","PLA2G2D","GZMH","IL2RG","CTSS","TRAJ23","FTH1"))
+pdl1_df<- data.frame(corr= c(0.271542305,0.233823872,0.229628233,0.225445086,0.224991162,0.221781738,0.220999812,0.22024343,0.219853936,0.218480681), gene=c("CD80","HLA-DRB5","CD86","FGL2","TTN","FCER1G","GPR132","GZMA","SPN","MCOLN2"))
+
+pdf(paste0(save_path,"Ext_Data_Fig9i-j_barplot_correlations_ido1_pdl1.pdf"))
+p<-ggplot(data=ido1_df, aes(x = reorder(gene, +corr), y=corr)) +
+  geom_bar(stat="identity") + ylim(c(0,1)) + ggtitle("Top 10 genes correlating with IDO1")
+p + coord_flip()
+print(p)
+q<-ggplot(data=pdl1_df, aes(x = reorder(gene, +corr), y=corr)) +
+  geom_bar(stat="identity") + ylim(c(0,1)) + ggtitle("Top 10 genes correlating with PDL1")
+q + coord_flip()
+print(q)
+dev.off()
+```
+
+
