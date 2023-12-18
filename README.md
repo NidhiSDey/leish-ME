@@ -285,7 +285,7 @@ Option1 : Start from scratch using raw 10x files (available post publication)
     Download all samples/10x files from GSMXXXX into source/'Visium_slide_name'/
     Start with sl2_cl_integration.Rmd, in_pkdl_integration.Rmd  or br_cl_integration.Rmd 
 
-Option2 : Start from prepared Rds containing primary clustering analysis
+Option2 : Start from prepared Rds containing primary clustering analysis - 10.5281/zenodo.10402126
 
     1. Download all Rds files from the Zenodo repository - 10.5281/zenodo.10402126 and keep them in your working folder.
     2. Open Rmd file as per the figure needed from table above on RStudio. 
