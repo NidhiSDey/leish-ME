@@ -160,7 +160,7 @@ loaded via a namespace (and not attached):
 
 #### Running time: All R files run sequentially will take approximately 2 hours to run on a windows computer with 64GB RAM on a 4 core 3.4GHz machine 
 
-#### Data files to run the analysis are available on Zenodo
+#### Data files to run the analysis are available on Zenodo - 10.5281/zenodo.10402126
 
 # Instructions for generating figures and analysis for leish-ME
 
@@ -287,7 +287,7 @@ Option1 : Start from scratch using raw 10x files (available post publication)
 
 Option2 : Start from prepared Rds containing primary clustering analysis
 
-    1. Download all Rds files from Zenodo and keep them in your working folder.
+    1. Download all Rds files from the Zenodo repository - 10.5281/zenodo.10402126 and keep them in your working folder.
     2. Open Rmd file as per the figure needed from table above on RStudio. 
     3. Define working folder in the path (Find instructions in the Rmd file). 
     4. Create a sub-folder in your wokring path 'R'. All outputs will be saved here
