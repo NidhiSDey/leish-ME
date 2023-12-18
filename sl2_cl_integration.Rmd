@@ -1,0 +1,163 @@
+---
+title: "introduction"
+output: rmarkdown::html_vignette
+vignette: >
+  %/VignetteIndexEntry{introduction}
+  %/VignetteEngine{knitr::rmarkdown}
+  %/VignetteEncoding{UTF-8}
+---
+
+```{r message=FALSE}
+library(Seurat)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+library(sqldf)
+library(dplyr)
+library(RColorBrewer)
+library(plotly)
+library(spatstat)
+library(gplots)
+library(corrplot)
+library(stringr)
+library(VennDiagram)
+library(grid)
+library(reshape2)
+library(ggplot2)
+
+study_name<-"human_SLCL_Visium"
+#PLEASE ADD YOUR WORKING PATH HERE
+study_path<-"your_path_here/"
+
+samples <-c("30i","35i","40i", "53i", "47i", "48i")
+#, "57i")
+sample_label <-c("P1","P2","P3", "P4", "P5", "P6")
+#Create a sub-folder in your 
+#work path where all outputs
+#will be stored
+save_path<-paste0(study_path,"R/")
+save_on<-1
+
+```
+###AS LONG AS YOU HAVE FOLDERS STARTING WITH 'V' IN 'study' PATH AND IF YOU###
+###HAVE GIVEN THE CORRECT SAMPLE NAMES (SEE 'samples' ABOVE) THE FOLLOWING CODE###
+### WILL PICK UP .H5 FILES ASSOCIATED WITH THESE SAMPLES###
+```{r loadSeurat h5}
+# Start the clock!
+ptm <- proc.time()
+seuratSpatial <- list()
+counter<-1
+for (sample in samples){
+  sample_dir <- Sys.glob(paste0(study_path,"V*/*",sample,"/"))
+  sample_path <- Sys.glob(paste0(study_path,"V*/*",sample,"/","*.h5"))
+  sample_path_file <- tail(strsplit(sample_path, split = "/")[[1]], n = 1)
+
+  seuratSpatial[[sample]]<-Load10X_Spatial(
+                                        sample_dir,
+                                        filename = sample_path_file,
+                                        assay = "Spatial",
+                                        slice = sample,
+                                        filter.matrix = TRUE,
+                                        to.upper = FALSE
+                                      )
+   seuratSpatial[[sample]]$orig.ident <- sample
+seuratSpatial[[sample]]$label <- sample_label[[counter]]
+  counter<-counter+1
+}
+# Stop the clock
+time_taken<- proc.time() - ptm
+print(paste0("Time elapsed: ", sprintf((time_taken[3]/60), fmt = '%#.2f')," minutes"))
+```
+#QC plots
+```{r data_pre_processing}
+pdf(file = paste0(save_path, study_name, "_overall_counts.pdf"))
+  for(object in seuratSpatial){
+    plot1 <- VlnPlot(object, features = "nCount_Spatial", pt.size = 0.1) + NoLegend()
+    plot2 <- SpatialFeaturePlot(object, features = "nCount_Spatial") + theme(legend.position = "right")
+    plot3 <- SpatialFeaturePlot(object, features = "nFeature_Spatial") + theme(legend.position = "right")
+    print(wrap_plots(plot1, plot2, plot3))
+  }
+dev.off()
+```
+#Normalize
+```{r SCTRansform & merge, warning=FALSE}
+# Start the clock!
+ptm <- proc.time()
+for(sample in samples){
+  seuratSpatial[[sample]] <- SCTransform(seuratSpatial[[sample]], assay = "Spatial", verbose = FALSE, vars.to.regress = c("nCount_Spatial", "nFeature_Spatial"))
+}
+# Stop the clock
+time_taken<- proc.time() - ptm
+print(paste0("Time elapsed: ", sprintf((time_taken[3]/60), fmt = '%#.2f')," minutes"))
+```
+#Integrate across samples
+```{r integrate_workflow_for_spatial}
+# Start the clock!
+ptm <- proc.time()
+features <- SelectIntegrationFeatures(object.list = seuratSpatial, nfeatures = 3000)
+seuratSpatial <- PrepSCTIntegration(object.list = seuratSpatial, anchor.features = features)
+immune.anchors <- FindIntegrationAnchors(object.list = seuratSpatial, normalization.method = "SCT", anchor.features = features)
+
+nd2117SLCL_skin_merged <- IntegrateData(anchorset = immune.anchors, normalization.method = "SCT")
+# Stop the clock
+time_taken<- proc.time() - ptm
+print(paste0("Time elapsed: ", sprintf((time_taken[3]/60), fmt = '%#.2f')," minutes"))
+```
+#Cluster
+```{r clustering}
+# Start the clock!
+ptm <- proc.time()
+nd2117SLCL_skin_merged <- RunPCA(nd2117SLCL_skin_merged, assay = "integrated", verbose = FALSE)
+ElbowPlot(nd2117SLCL_skin_merged)
+
+res=0.9
+dims=15
+
+spot_colours = c('0'='#F68282','1'='#31C53F','2'='#1FA195','3'='#B95FBB','4'='#D4D915',
+    '5'='#28CECA','6'='#ff9a36', '7'='#2FF18B','8'='#aeadb3', '9'='#faf4cf','10'='#CCB1F1','11'='#25aff5')
+
+levels(Idents(nd2117SLCL_skin_merged))
+
+my_cols2 <- spot_colours[order(as.integer(names(spot_colours)))]
+
+#clustering
+nd2117SLCL_skin_merged <- FindNeighbors(nd2117SLCL_skin_merged, reduction = "pca", dims = 1:dims)
+nd2117SLCL_skin_merged <- FindClusters(nd2117SLCL_skin_merged, verbose = FALSE, resolution = res)
+#umap/tsne for visualisation
+nd2117SLCL_skin_merged <- RunUMAP(nd2117SLCL_skin_merged, reduction = "pca", dims = 1:dims)
+nd2117SLCL_skin_merged <- RunTSNE(nd2117SLCL_skin_merged, reduction = "pca", dims = 1:dims)
+#prepare for de
+nd2117SLCL_skin_merged <- PrepSCTFindMarkers(nd2117SLCL_skin_merged, assay = "SCT")
+# Stop the clock
+time_taken<- proc.time() - ptm
+print(paste0("Time elapsed: ", sprintf((time_taken[3]/60), fmt = '%#.2f')," minutes"))
+
+pdf(paste0(save_path, "with47_48_DimPlot_PC1to",dims,"res",res,".pdf"))
+  DimPlot(nd2117SLCL_skin_merged, reduction = "tsne", label = TRUE, pt.size = 0.8, shuffle = TRUE, cols = my_cols2) 
+    DimPlot(nd2117SLCL_skin_merged, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, cols = my_cols2,label.box = TRUE, repel = TRUE) 
+  
+ DimPlot(nd2117SLCL_skin_merged, reduction = "tsne", group.by = "orig.ident")  
+    DimPlot(nd2117SLCL_skin_merged, reduction = "umap", group.by = "label", pt.size = 1.5) + ggtitle(label = NULL)  
+  
+  DimPlot(nd2117SLCL_skin_merged, reduction = "tsne", group.by = "label", pt.size = 0.8, order = c("35i"))+ ggtitle(label = NULL) 
+    DimPlot(nd2117SLCL_skin_merged, reduction = "umap", group.by = "label")+ ggtitle(label = NULL)
+dev.off()
+
+prop.table(table(Idents(nd2117SLCL_skin_merged), nd2117SLCL_skin_merged$orig.ident), margin = 2)
+#write proportion per cell type
+write.csv(prop.table(table(Idents(nd2117SLCL_skin_merged), nd2117SLCL_skin_merged$orig.ident), margin = 2), paste0(save_path, "_ident_proportions_sample.csv"), row.names =TRUE)
+
+pdf(paste0(save_path, "with47_48_Spatial_DimPlot_PC1to",dims,"res",res,".pdf"))
+  x<-SpatialDimPlot(nd2117SLCL_skin_merged,crop = FALSE, pt.size.factor = 1, image.alpha = 0,label = FALSE, label.size = 3, repel = TRUE, cols = my_cols2) 
+  y<-SpatialDimPlot(nd2117SLCL_skin_merged, alpha = c(0.9, 0.9), crop = FALSE, pt.size.factor = 0.9, cols = my_cols2)
+
+  for(i in 1:6){
+    print(x[[i]])
+  }
+  for(i in 1:6){
+    print(y[[i]])
+  }
+dev.off()  
+#ONLY SAVE Rds IF RE-RUNNING PIPELINE FROM SCRATCH - NOT REQUIRED FOR PLOTTING MANUSCRIPT FIGURES
+#saveRDS(nd2117SLCL_skin_merged, paste0(save_path, "with47_48_nd2117SLCL_skin_merged.Rds"))
+```

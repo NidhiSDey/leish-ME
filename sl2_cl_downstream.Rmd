@@ -1,0 +1,516 @@
+
+```{r message=FALSE}
+library(Seurat)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+library(sqldf)
+library(dplyr)
+library(RColorBrewer)
+library(plotly)
+library(spatstat)
+library(gplots)
+library(corrplot)
+library(stringr)
+library(VennDiagram)
+library(grid)
+library(reshape2)
+library(ggplot2)
+library(ggpubr)
+#https://bioconductor.org/packages/release/bioc/vignettes/EnhancedVolcano/inst/doc/EnhancedVolcano.html#plot-the-most-basic-volcano-plot
+library(EnhancedVolcano)
+
+study_name<-"human_SLCL_Visium"
+#PLEASE ADD YOUR WORKING PATH HERE
+study_path<-"your_path_here/"
+
+samples <-c("30i","35i","40i", "53i", "47i", "48i")
+sample_label<-c("P1","P2","P3", "P4", "P5", "P6")
+#Create a sub-folder in your 
+#work path where all outputs
+#will be stored
+save_path<-paste0(study_path,"R/")
+save_on<-1
+
+```
+
+```{r read_RDS}
+nd2117SLCL_skin_merged <- readRDS(paste0(save_path, "with47_48_integrated_nd2117slcl_dims15_res0.9_prepsct.rds"))
+#while the res and dims are not directly
+#utilised here these are kept here such 
+#name of outputs can contain this information
+res=0.9
+dims=15
+```
+
+```{r differential_expresion INFERRED BY SEURAT CLUSTERS}
+# Start the clock!
+ptm <- proc.time()
+levels(Idents(nd2117SLCL_skin_merged))
+
+#Find Marker genes 
+all_markers <- FindAllMarkers(nd2117SLCL_skin_merged, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25, assay = "SCT")
+
+write.csv(all_markers, paste0(save_path, "with47_48_markers_dims",dims,"_res",res,".csv"), row.names = TRUE)
+
+all_markers <- read.csv(paste0(save_path, "with47_48_markers_dims",dims,"_res",res,".csv"), header = TRUE)
+# Stop the clock
+time_taken<- proc.time() - ptm
+print(paste0("Time elapsed: ", sprintf((time_taken[3]/60), fmt = '%#.2f')," minutes"))
+```
+
+
+```{r rename clusters based on region location}
+# Start the clock!
+ptm <- proc.time()
+DefaultAssay(nd2117SLCL_skin_merged)<-"SCT"
+
+Idents(nd2117SLCL_skin_merged)<-"orig.ident"
+levels(nd2117SLCL_skin_merged)
+new.cluster.ids <- sample_label
+#create new meta data column sample_label to retain new names
+names(new.cluster.ids) <- levels(nd2117SLCL_skin_merged)
+new.cluster.ids
+# > new.cluster.ids
+#  30i  35i  40i  53i  47i  48i 
+# "P1" "P2" "P3" "P4" "P5" "P6" 
+nd2117SLCL_skin_merged <- RenameIdents(nd2117SLCL_skin_merged, new.cluster.ids)
+nd2117SLCL_skin_merged$sample_label <- Idents(nd2117SLCL_skin_merged)
+
+#Fig 1C
+pdf(paste0(save_path, "Fig1C_original_identities.pdf"))
+  DimPlot(nd2117SLCL_skin_merged, reduction = "umap", pt.size = 1.5, shuffle = TRUE, group.by = "sample_label", label.size = 6)  
+dev.off()
+
+#Ext_Data Fig 1C
+pdf(paste0(save_path, "Ext_Data_Fig1C_original_identities.pdf"))
+  VlnPlot(nd2117SLCL_skin_merged, features = "nFeature_Spatial", group.by = "sample_label") +
+    NoLegend() +
+    geom_hline(aes(yintercept = 4104), col = "red", linewidth = 0.3) +
+    ggtitle(label = "") +
+    ylab(label = "Gene count")
+dev.off()
+
+#Fig1D/E/F
+Idents(nd2117SLCL_skin_merged) <- nd2117SLCL_skin_merged$morpho
+ident_colours =c("mix" ="grey", "My1" = "#008000", "B/fib" ="#CD5C5C",'My2'='#ff9a36','TL'='#B95FBB', 'KC1'='#faf4cf',"Fib"='#F0E68C','KC2'='#E6E6FA', 'B'='#F68282','My3'='#25aff5',"Endothelial" ="#ADD8E6")
+my_cols1 <- ident_colours[order(as.character(names(ident_colours)))]
+
+#Fig 1D
+pdf(paste0(save_path, "Fig1D_PC1to",dims,"res",res,"labelledIndents.pdf"))
+  DimPlot(nd2117SLCL_skin_merged, reduction = "umap", label = TRUE, pt.size = 1.5, shuffle = TRUE, cols = my_cols1,label.box = TRUE, repel = TRUE, label.size = 6) + NoLegend() 
+dev.off()
+
+#Fig 1E
+pdf(paste0(save_path, "Fig1E_heatmap_allclusters_reindented",dims,"_res",res,".pdf"), 20, 15)
+  DefaultAssay(nd2117SLCL_skin_merged) <- "SCT"
+  all_markers %>%
+      group_by(cluster) %>%
+      top_n(n = 10, wt = avg_log2FC) -> top10
+  DoHeatmap(nd2117SLCL_skin_merged, features = top10$gene, group.colors = my_cols1) + NoLegend()
+dev.off()
+
+#Fig 1F and Ext Data Fig 1d
+pdf(paste0(save_path, "Fig1F_SpatialDimPlot_labelledindents_PC1to",dims,"res",res,".pdf"))
+  x<-SpatialDimPlot(nd2117SLCL_skin_merged,crop = FALSE, pt.size.factor = 1, image.alpha = 0,label = FALSE, label.size = 3, repel = TRUE, cols = my_cols1) 
+  y<-SpatialDimPlot(nd2117SLCL_skin_merged, alpha = c(0.9, 0.9), crop = FALSE, pt.size.factor = 0.9, cols = my_cols1)
+  for(i in 1:6){
+    print(x[[i]])
+  }
+  for(i in 1:6){
+    print(y[[i]])
+  }
+dev.off() 
+
+#THE FOLOWING GRAPHS ARE THE BASIS OF Fig 1G,H and Ext_Data. Fig 1 e-k (left panels) and Supplementary Fig 2
+Idents(nd2117SLCL_skin_merged) <- nd2117SLCL_skin_merged$morpho
+int.genes <- c("IDO1","CD274","KRT14", "CCL18", "JCHAIN", "COL1A1", "CCL19", "CHIT1", "SPARCL1")
+for (genes in int.genes){
+  #feature <- top.features[spatial_feature]
+  pdf(paste0(save_path, "Spatial_feature_int_genes_", genes, ".pdf"))
+    x<-SpatialFeaturePlot(nd2117SLCL_skin_merged, features = genes, alpha = c(0, 0), crop = FALSE, pt.size.factor = 1)
+    y<-SpatialFeaturePlot(nd2117SLCL_skin_merged, features = genes, alpha = c(0, 5), crop = FALSE, pt.size.factor = 1, min.cutoff = 0)
+    #, max.cutoff = 10
+    z<-FeaturePlot(nd2117SLCL_skin_merged,reduction = "umap",label = TRUE, pt.size = 1.2, features = genes, min.cutoff = 0)
+    k<-VlnPlot(nd2117SLCL_skin_merged,features = genes, cols = my_cols1, y.max = 6)
+      print(x[[1]]+y[[1]])
+      print(x[[2]]+y[[2]])
+      print(x[[3]]+y[[3]])
+      print(x[[4]]+y[[4]]) 
+      print(x[[5]]+y[[5]])
+      print(x[[6]]+y[[6]])
+      print(z)
+      print(k)
+
+  dev.off()
+}
+
+#DATA FOR FIG 1I
+my1my2my3 <- subset(nd2117SLCL_skin_merged, subset = morpho %in% c("My1","My2","My3"))
+fig1i<-VlnPlot(my1my2my3, features = c("IDO1","CD274"), group.by = "morpho")
+#use the following dataframes on Graphpad to gene
+ido1_across_my1my2my3<-fig1i[[1]][["data"]]
+pdl1_across_my1my2my3<-fig1i[[2]][["data"]]
+
+#THE FOLOWING GRAPHS CONTRIBUTE TO Ext_Data. Fig 1 e-k (right panels)
+## plotting each cluster separately on 40i
+cluster_set <-CellsByIdentities(nd2117SLCL_skin_merged)
+## KC1 and KC2
+pdf(paste0(save_path, "SpatialDimPlot_clusterbyid_KC1_2.pdf"))
+SpatialDimPlot(nd2117SLCL_skin_merged,crop = FALSE, cells.highlight = c(cluster_set[["KC1"]],cluster_set[["KC2"]]), pt.size.factor = 1, image.alpha = 0.5,label = FALSE, label.size = 3, repel = TRUE, images = "X40i", cols.highlight=c("#000000", "#DCDCDC"))
+dev.off()
+## my1
+pdf(paste0(save_path, "SpatialDimPlot_clusterbyid_my1.pdf"))
+SpatialDimPlot(nd2117SLCL_skin_merged,crop = FALSE, cells.highlight = cluster_set[["My1"]], pt.size.factor = 1, image.alpha = 0.5,label = FALSE, label.size = 3, repel = TRUE, images = "X40i", cols.highlight=c("#000000", "#DCDCDC"))
+dev.off()
+
+## B/fib and B
+pdf(paste0(save_path, "SpatialDimPlot_clusterbyid_B_fibB.pdf"))
+SpatialDimPlot(nd2117SLCL_skin_merged,crop = FALSE, cells.highlight = c(cluster_set[["B"]],cluster_set[["B/fib"]]), pt.size.factor = 1, image.alpha = 0.5,label = FALSE, label.size = 3, repel = TRUE, images = "X40i", cols.highlight=c("#000000", "#DCDCDC"))
+dev.off()
+
+pdf(paste0(save_path, "SpatialDimPlot_clusterbyid_B.pdf"))
+SpatialDimPlot(nd2117SLCL_skin_merged,crop = FALSE, cells.highlight = c(cluster_set[["B"]]), pt.size.factor = 1, image.alpha = 0.5,label = FALSE, label.size = 3, repel = TRUE, images = "X40i", cols.highlight=c("#000000", "#DCDCDC"))
+dev.off()
+
+## B/fib and Fib
+pdf(paste0(save_path, "SpatialDimPlot_clusterbyid_fib_fibB.pdf"))
+SpatialDimPlot(nd2117SLCL_skin_merged,crop = FALSE, cells.highlight = c(cluster_set[["Fib"]],cluster_set[["B/fib"]]), pt.size.factor = 1, image.alpha = 0.5,label = FALSE, label.size = 3, repel = TRUE, images = "X40i", cols.highlight=c("#000000", "#DCDCDC"))
+dev.off()
+
+## TL
+pdf(paste0(save_path, "SpatialDimPlot_clusterbyid_tl.pdf"))
+SpatialDimPlot(nd2117SLCL_skin_merged,crop = FALSE, cells.highlight = cluster_set[["TL"]], pt.size.factor = 1, image.alpha = 0.5,label = FALSE, label.size = 3, repel = TRUE, images = "X40i", cols.highlight=c("#000000", "#DCDCDC"))
+dev.off()
+
+## My3
+pdf(paste0(save_path, "SpatialDimPlot_clusterbyid_my2.pdf"))
+SpatialDimPlot(nd2117SLCL_skin_merged,crop = FALSE, cells.highlight = cluster_set[["My2"]], pt.size.factor = 1, image.alpha = 0.5,label = FALSE, label.size = 3, repel = TRUE, images = "X40i", cols.highlight=c("#000000", "#DCDCDC"))
+dev.off()
+
+## Endothelial
+pdf(paste0(save_path, "SpatialDimPlot_clusterbyid_Endothelial.pdf"))
+SpatialDimPlot(nd2117SLCL_skin_merged,crop = FALSE, cells.highlight = cluster_set[["Endothelial"]], pt.size.factor = 1, image.alpha = 0.5,label = FALSE, label.size = 3, repel = TRUE, images = "X40i", cols.highlight=c("#000000", "#DCDCDC"))
+dev.off()
+# Stop the clock
+time_taken<- proc.time() - ptm
+print(paste0("Time elapsed: ", sprintf((time_taken[3]/60), fmt = '%#.2f')," minutes"))
+```
+
+```{r between_clusters}
+###Supplementary Fig. 1
+# Start the clock!
+ptm <- proc.time()
+#DATA FOR SUPPLEMENTARY Fig 1a and 1b
+#My2 – My1;  
+my2_rich_markers <- FindMarkers(nd2117SLCL_skin_merged, ident.1 = "My2", ident.2 = "My1")
+write.csv(my2_rich_markers, paste0(save_path,"my2_rich_markers.csv"))
+
+#My3 – My12; 
+my3_rich_markers <- FindMarkers(nd2117SLCL_skin_merged, ident.1 = "My3", ident.2 = c("My1", "My2"))
+write.csv(my3_rich_markers, paste0(save_path,"my3_rich_markers.csv"))
+# Stop the clock
+time_taken<- proc.time() - ptm
+print(paste0("Time elapsed: ", sprintf((time_taken[3]/60), fmt = '%#.2f')," minutes"))
+```
+
+```{r enhanced_volcano}
+#SUPPLEMENTARY Fig 1a and 1b
+lst_gene_lists <- c("my2_rich_markers", "my3_rich_markers")
+
+for(list in lst_gene_lists){
+  pdf(paste0(save_path, list, "_volcano.pdf"),8,12)
+  df <- read.csv(paste0(save_path, list, ".csv"))
+  df$p_val <- NULL
+  colnames(df) <- c("gene","log2FoldChange","pct1","pct2","pvalue")
+  df$pvalue[df$pvalue==0]<-5e-305
+  rownames(df) <- df$gene
+
+  print(EnhancedVolcano(df,
+                      lab = rownames(df),
+                      x = 'log2FoldChange',
+                      xlim = c(-3, 3),
+                      y = 'pvalue',
+                      title = list,
+                      pCutoff = 10e-4,
+                      FCcutoff = 0.5,
+                      pointSize = 0.5,
+                      labSize = 3.0, 
+                      subtitle = "",drawConnectors = TRUE,
+                      widthConnectors = 0.5, max.overlaps = Inf,legendLabSize = 10, legendIconSize = 3.0)
+  )
+  dev.off()
+}
+```
+
+
+```{r feature scatter ido1 and pdl1}
+mean_pdl1<- mean(nd2117SLCL_skin_merged[["SCT"]]["CD274",])
+mean_ido1<- mean(nd2117SLCL_skin_merged[["SCT"]]["IDO1",])
+#Fig 3A
+pdf(paste0(save_path, "47_48_pdl1_ido1_overall_scatter.pdf"), height = 5, width=5)
+ FeatureScatter(nd2117SLCL_skin_merged, feature1 = "IDO1", feature2 = "CD274", cols = rep("black",11), jitter=3) + NoLegend() + geom_vline(aes(xintercept = 1.2), col = "red", linewidth = 0.3) + geom_hline(aes(yintercept = 0.5), col = "red", linewidth = 0.3)
+dev.off()
+```
+
+```{r create annotation column for ido1 pdl1 spots}
+#Data preparation for Fig 3B, 3C and Ext Data Fig 5A
+###################################################################
+DefaultAssay(nd2117SLCL_skin_merged) <- "SCT"
+nd2117SLCL_skin_merged$ido1pdl1 <- "rest_of_the_spots"
+nd2117SLCL_skin_merged$spot_id<-rownames(nd2117SLCL_skin_merged@meta.data)
+
+ido1_spots<-WhichCells(nd2117SLCL_skin_merged, expression = IDO1 > 1.1 & CD274 < 0.5)
+ido1_pdl1_spots<-WhichCells(nd2117SLCL_skin_merged, expression = IDO1 > 1.1 & CD274 > 0.5)
+pdl1_spots<-WhichCells(nd2117SLCL_skin_merged, expression = IDO1 < 1.1 & CD274 > 0.5)
+
+nd2117SLCL_skin_merged@meta.data$ido1pdl1[nd2117SLCL_skin_merged@meta.data$spot_id %in% ido1_spots] <- "ido1_spots"
+nd2117SLCL_skin_merged@meta.data$ido1pdl1[nd2117SLCL_skin_merged@meta.data$spot_id %in% ido1_pdl1_spots] <- "ido1_pdl1_spots"
+nd2117SLCL_skin_merged@meta.data$ido1pdl1[nd2117SLCL_skin_merged@meta.data$spot_id %in% pdl1_spots] <- "pdl1_spots"
+```
+
+```{r spatial plots of ido1 and pdl1}
+#Fig 3B and Ext Data Fig 5A
+pdf(paste0(save_path, "47_48_ido1_pdl1_spatialplot_ido11dot1pdldot5.pdf"), height = 5, width=5)  
+x<- SpatialPlot(nd2117SLCL_skin_merged, group.by= "ido1pdl1", image.alpha = 0.3, crop = F, pt.size.factor = 1, cols = c("ido1_spots"="#6495ED","ido1_pdl1_spots" = "#FF1493","pdl1_spots"= "#FFA500","rest_of_the_spots" = "#E6E6FA"))
+ for(i in 1:6){
+    print(x[[i]])
+  }
+dev.off() 
+```
+
+```{r}
+nd2117SLCL_skin_merged<- SetIdent(object = nd2117SLCL_skin_merged, value = "ido1pdl1")
+ido1pdl1markergenes<- FindAllMarkers(nd2117SLCL_skin_merged,assay = "SCT",min.pct = 0.1,logfc.threshold = 0.1)
+write.csv(ido1pdl1markergenes, paste0(save_path, "ido1pdl1markergenes.csv"))
+sig_ido1pdl1markergenes <- subset(ido1pdl1markergenes, subset = p_val_adj < 0.05)
+write.csv(sig_ido1pdl1markergenes, paste0(save_path, "ido1pdl1markergenespval0.05.csv"))
+
+#DATA BASIS FOR Fig3C
+pdf(paste0(save_path, "ido1_pdl1_spots_dot_plots_cytokines.pdf"))
+  n<-DotPlot(nd2117SLCL_skin_merged, features = c("CCL18","IL1B","IL24","CXCL9","CXCL14","IL32","TNFRSF6B","IFNGR2","CCL19","CXCL12", "CCL8"), group.by = "ido1pdl1", scale = TRUE) + RotatedAxis() + coord_flip() + theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+  print(n)
+dev.off()
+
+write.csv(n[["data"]], paste0(save_path, "ido1pdl1_lineplot_data_top50de_for_graphpad_new.csv"))
+```
+
+```{r plotting cytokines etc in Fig 3}
+##Ext Data Fig. 5f-j and Fig.3 d-k
+interesting_genes<- c("CCL18","IL1B","IL24","CXCL9","CXCL14","IL32","TNFRSF6B","IFNGR2","CCL19","LTB","CCR7","CXCL13","PDGFRB","CXCL12")
+
+for (interesting_gene in interesting_genes){
+    pdf(paste0(save_path, "Spatial_feature_", interesting_gene ,".pdf"))
+    x<-SpatialFeaturePlot(nd2117SLCL_skin_merged, features = interesting_gene, alpha = c(0, 0), crop = FALSE, pt.size.factor = 1)
+    y<-SpatialFeaturePlot(nd2117SLCL_skin_merged, features = interesting_gene, alpha = c(5, 5), crop = FALSE, pt.size.factor = 1)
+      print(x[[1]]+y[[1]])
+      print(x[[2]]+y[[2]])
+      print(x[[3]]+y[[3]])
+      print(x[[4]]+y[[4]]) 
+      print(x[[5]]+y[[5]])
+      print(x[[6]]+y[[6]])
+
+  dev.off()
+}
+SpatialFeaturePlot(nd2117SLCL_skin_merged, features = "TGFB1", alpha = c(5, 5), crop = FALSE, pt.size.factor = 1, min.cutoff = 0.5, images = "X40i")
+SpatialFeaturePlot(nd2117SLCL_skin_merged, features = "TNF", alpha = c(5, 5), crop = FALSE, pt.size.factor = 1, min.cutoff = 0.5, images = "X40i")
+SpatialFeaturePlot(nd2117SLCL_skin_merged, features = "IFNG", alpha = c(5, 5), crop = FALSE, pt.size.factor = 1, min.cutoff = 0.5, images = "X40i")
+
+# #########################################################################################################################################################
+# 
+# 
+# for (interleukin in interleukins){
+#     pdf(paste0(save_path, "Spatial_feature_", interleukin ,".pdf"))
+#     x<-SpatialFeaturePlot(nd2117SLCL_skin_merged, features = interleukin, alpha = c(0, 0), crop = FALSE, pt.size.factor = 1)
+#     y<-SpatialFeaturePlot(nd2117SLCL_skin_merged, features = interleukin, alpha = c(5, 5), crop = FALSE, pt.size.factor = 1)
+#       print(x[[1]]+y[[1]])
+#       print(x[[2]]+y[[2]])
+#       print(x[[3]]+y[[3]])
+#       print(x[[4]]+y[[4]]) 
+#   dev.off()
+# }
+# 
+# SpatialFeaturePlot(nd2117SLCL_skin_merged, features = "IL32", alpha = c(5, 5), crop = FALSE, pt.size.factor = 1, min.cutoff = 1, images = "X40i")
+# 
+# ##############################################################################################################################################################
+# 
+# 
+# for (tnf in inf_tnf_tgf){
+#     pdf(paste0(save_path, "Spatial_feature_", tnf ,".pdf"))
+#     x<-SpatialFeaturePlot(nd2117SLCL_skin_merged, features = tnf, alpha = c(0, 0), crop = FALSE, pt.size.factor = 1)
+#     y<-SpatialFeaturePlot(nd2117SLCL_skin_merged, features = tnf, alpha = c(5, 5), crop = FALSE, pt.size.factor = 1)
+#       print(x[[1]]+y[[1]])
+#       print(x[[2]]+y[[2]])
+#       print(x[[3]]+y[[3]])
+#       print(x[[4]]+y[[4]]) 
+#   dev.off()
+# }
+# 
+# 
+# 
+
+```
+
+```{r cytokines}
+##Extended Data Fig. 5e
+# cytokines
+
+sig_ido1pdl1markergenes <- read.csv(paste0(save_path, "ido1pdl1markergenespval0.05.csv"))
+
+
+ccl_genes<-grep(pattern = "^CCL", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+cx_genes<-grep(pattern = "^CX", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+ccr_genes<-grep(pattern = "^CCR", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+
+chemokines <- c(ccl_genes, cx_genes, ccr_genes)
+chemokines <- sort(chemokines)
+chemokines <- unique(chemokines)
+
+interleukins<-grep(pattern = "^IL", x =  sig_ido1pdl1markergenes$gene, value = TRUE)
+interleukins <- sort(interleukins)
+interleukins <- unique(interleukins)
+
+interferons <- grep(pattern = "^IFN", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+tnfs <-grep(pattern = "^TNF", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+tgfs <-grep(pattern = "^TGF", x = sig_ido1pdl1markergenes$gene, value = TRUE)
+
+inf_tnf_tgf <- c(interferons, tnfs, tgfs)
+inf_tnf_tgf <- sort(inf_tnf_tgf)
+inf_tnf_tgf <- unique(inf_tnf_tgf)
+
+pdf(paste0(save_path, "Fig5e_ido1_pdl1_spots_dot_plots_DE_chemokines.pdf"))
+  x<-DotPlot(nd2117SLCL_skin_merged, features = unique(chemokines), group.by = "ido1pdl1", scale = TRUE, scale.min = 0, col.min = 0, col.max = 1.5) + RotatedAxis() + coord_flip() + theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+  Fig1 <- ggarrange(x,ncol = 1,nrow = 1)
+  print(Fig1)
+dev.off()
+
+pdf(paste0(save_path, "Fig5e_nd2117SLCL_skin_merged_IDO1PDL1_dot_plots_interleukins.pdf"))
+  x<-DotPlot(nd2117SLCL_skin_merged, features = interleukins, group.by = "ido1pdl1", scale = TRUE, scale.min = 0, col.min = 0, col.max = 1.5) + RotatedAxis() + coord_flip() + theme(axis.title.x=element_blank(),axis.title.y=element_blank()) 
+  Fig1 <- ggarrange(x,ncol = 1,nrow = 1)
+  print(Fig1)
+dev.off()
+
+pdf(paste0(save_path, "Fig5e_nd2117SLCL_skin_merged_IDO1PDL1_dot_plots_DE_inf_tnf_tgf.pdf"))
+  x<-DotPlot(nd2117SLCL_skin_merged, features = inf_tnf_tgf, group.by = "ido1pdl1", scale = TRUE, scale.min = 0, col.min = 0, col.max = 1.5) + RotatedAxis() + coord_flip() + theme(axis.title.x=element_blank(),axis.title.y=element_blank()) 
+  
+  Fig1 <- ggarrange(x,ncol = 1,nrow = 1)
+  print(Fig1)
+dev.off()
+
+###extracted ICs from significant gene list
+immune_checks <- c("CTLA4","PDCDLG2","LAG3","CD40","HAVCR2","LILRB2","LILRB4", "CD86", "CD80", "TNFRSF4", "CD276", "CD28" )
+
+pdf(paste0(save_path, "Fig5e_nd2117SLCL_skin_merged_dot_plots_ido1pdl1_checkpoints.pdf"))
+  #for(cluster in 0:3){
+    x<-DotPlot(nd2117SLCL_skin_merged, features = immune_checks, group.by = "ido1pdl1", scale = TRUE, scale.min = 0, col.min = 0, col.max = 1.5) + RotatedAxis() + coord_flip() + theme(axis.title.x=element_blank(),
+                axis.title.y=element_blank())
+    Fig <- ggarrange(x,ncol = 1,nrow = 1)
+    print(annotate_figure(Fig,top = text_grob(paste0("Immune checkpoints") , color = "black", face = "bold", size = 14)))
+dev.off()
+
+
+###spatial plots of 
+
+```
+
+
+
+```{r warning=FALSE}
+# Start the clock!
+ptm <- proc.time()
+######
+#function correlation
+######
+fn_get_corr_mat <- function(obj, gene_name){
+  correlation_df_list<-list()
+
+
+  mat_count<-as.matrix(obj[['SCT']]@data)
+
+  type<-"spearman"
+
+  #get 'gene of interest' expression of all cells
+  count_gene<-mat_count[gene_name,]
+
+  correlation_mat<-matrix(nrow = dim(mat_count)[1], ncol = 2)
+  #add rownames
+  rownames(correlation_mat) <- rownames(mat_count)
+  # Create a nested loop
+  for(row in 1:nrow(mat_count)) {
+    correlation<-stats::cor.test(count_gene, mat_count[row,], method = type)
+    correlation_mat[row,1]<-correlation$estimate
+    correlation_mat[row,2]<-correlation$p.value
+  }
+  correlation_mat<-as.data.frame(correlation_mat)
+  colnames(correlation_mat)<-c("corr_estimate","pvalue")
+  correlation_mat$gene<-rownames(correlation_mat)
+  #discard pvalues greater than 0.05 and correlations below 0.1
+  correlation_df<-sqldf::sqldf("SELECT gene, corr_estimate, pvalue
+                                FROM correlation_mat
+                                WHERE pvalue < 0.05
+                                AND corr_estimate > 0.1
+                                ORDER BY corr_estimate DESC")
+
+  anti_correlation_df<-sqldf::sqldf("SELECT gene, corr_estimate, pvalue
+                                FROM correlation_mat
+                                WHERE pvalue < 0.05
+                                AND corr_estimate < -0.1
+                                ORDER BY corr_estimate ASC")
+  #write.table(correlation_mat, file = paste0(exp_path, "All_CD8_T_PBMC_Malat1_Vs_allGene_flu_corr.csv"), sep=",")
+  correlation_df_list[[paste0("corr_", gene_name)]]<-correlation_df
+  correlation_df_list[[paste0("acorr_", gene_name)]]<-anti_correlation_df
+  list_corr_mat <- correlation_df_list
+  return(list_corr_mat)
+}
+#DATA FOR Fig 5 venn diagram; 5j-k
+#code to run the function for PDL1##################################################
+gene_name<-"CD274"
+
+list_corr_mat <-fn_get_corr_mat(nd2117SLCL_skin_merged, gene_name)
+
+print(paste0("Time elapsed: ", sprintf((time_taken[3]/60), fmt = '%#.2f')," minutes"))
+
+head(list_corr_mat[[paste0("corr_", gene_name)]],20)
+head(list_corr_mat[[paste0("acorr_", gene_name)]],20)
+
+write.table(list_corr_mat[[paste0("corr_", gene_name)]], file = paste0(save_path,"all_corr_",gene_name,".csv"), sep=",", row.names = FALSE)
+
+write.table(list_corr_mat[[paste0("acorr_", gene_name)]], file = paste0(save_path, "all_acorr_",gene_name,".csv"), sep=",", row.names = FALSE)
+
+rm(list_corr_mat)
+####################################################################################
+#DATA FOR 5 venn diagram; 5j-k
+#code to run the function for IDO1 #################################################
+gene_name<-"IDO1"
+
+list_corr_mat <-fn_get_corr_mat(nd2117SLCL_skin_merged, gene_name)
+
+head(list_corr_mat[[paste0("corr_", gene_name)]],20)
+head(list_corr_mat[[paste0("acorr_", gene_name)]],20)
+
+write.table(list_corr_mat[[paste0("corr_", gene_name)]], file = paste0(save_path,"all_corr_",gene_name,".csv"), sep=",", row.names = FALSE)
+
+write.table(list_corr_mat[[paste0("acorr_", gene_name)]], file = paste0(save_path, "all_acorr_",gene_name,".csv"), sep=",", row.names = FALSE)
+
+rm(list_corr_mat)
+####################################################################################
+###example bar plot
+ido1_df<- data.frame(corr= c(0.663807792,0.656694304,0.655527144,0.653921913,0.645821463,0.643203308,0.643118654,0.630901051,0.630550324,0.630154913), gene=c("GBP5",
+"SOD2","WARS","MMP3","LYZ","IFI30","MMP1","SRGN","SLC39A8","MT2A"))
+pdl1_df<- data.frame(corr= c(0.57445677,0.561674883,0.555248236,0.554009677,0.553597113,0.550140168,0.549784703,0.545359334,0.54056152,0.539830465), gene=c("WARS","LYZ","C15orf48","SOD2","MMP3","IFI30","CAPG","PFN1","CTSB","GLUL"))
+
+p<-ggplot(data=ido1_df, aes(x = reorder(gene, +corr), y=corr)) +
+  geom_bar(stat="identity") + ylim(c(0,1))
+p + coord_flip()
+
+q<-ggplot(data=pdl1_df, aes(x = reorder(gene, +corr), y=corr)) +
+  geom_bar(stat="identity") + ylim(c(0,1))
+q + coord_flip()
+
+# Stop the clock
+time_taken<- proc.time() - ptm
+print(paste0("Time elapsed: ", sprintf((time_taken[3]/60), fmt = '%#.2f')," minutes"))
+```
+
+
+
