@@ -1,3 +1,6 @@
+# leish-ME: Leishmania spp infected microenvironments
+
+
 # IL-32 producing CD8+ memory T cells and Tregs define the IDO1/PD-L1 niche in human cutaneous leishmaniasis skin lesions.
 
 ### Nidhi S. Dey1, Shoumit Dey1, Naj Brown1, Sujai Senarathne2, Luiza Campos Reis3,¥, Ritika Sengupta4, Jose Angelo L. Lindoso5,6, Sally James5, Lesley Gilbert5, Mitali Chatterjee4, Hiro Goto3, Shalindra Ranasinghe2 and Paul M. Kaye1*
