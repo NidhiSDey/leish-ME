@@ -1,4 +1,4 @@
-# leish-ME: IDO1/PD-L1 in infected microenvironments
+# Project leish-ME: IDO1/PD-L1 in infected microenvironments
 
 
 # IL-32 producing CD8+ memory T cells and Tregs define the IDO1/PD-L1 niche in human cutaneous leishmaniasis skin lesions.
@@ -22,3 +22,14 @@ Key words: Human cutaneous leishmaniasis, Host directed therapy, skin, IL-32, CD
 
 Human cutaneous leishmaniasis (CL) is characterised by chronic skin pathology.  Experimental and clinical data suggest that immune checkpoints (ICs) play a crucial role in disease outcome but the cellular and molecular niches that facilitate IC expression during leishmaniasis are ill-defined.   We previously showed that in Sri Lankan patients with CL two ICs, indoleamine 2,3-dioxygenase 1 (IDO1) and programmed death-ligand 1 (PD-L1) are enriched in lesional skin and that reduced PD-L1 expression early after treatment onset predicts cure rate following antimonial therapy.  Here, we use spatial cell interaction mapping to identify IL-32-expressing CD8+ memory cells and regulatory T cells as key components of the IDO1 / PD-L1 niche in a cohort of Sri Lankan CL patients.  This finding was confirmed in patients with distinct forms of dermal leishmaniasis in Brazil and India.  Furthermore, in our Sri Lankan cohort the abundance of IL-32+ cells and IL-32+CD8+ T cells at treatment onset was prognostic for rate of cure.  This study provides a unique spatial perspective on the expression of key ICs in these important skin diseases and a novel route to identify biomarkers of treatment response.  
 
+# Instructions for generating figures and analysis for leish-ME
+
+## Software requirements: 
+
+### OS: Tested on
+1. Windows 11
+2. Ubuntu 22.04.03 LTS
+
+#### Suggested computing requirements: 
+1. Processor 3 GHz and above
+2. RAM above 32GB
