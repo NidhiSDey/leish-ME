@@ -166,9 +166,10 @@ loaded via a namespace (and not attached):
 
 ## Description of technology used, associated code file and object it is dependent on
 
-Sri Lankan (SL) Cutaneous Leishmaniasis (CL) - Visium
-    • sl2_cl_cell2location.Rmd
-        ◦ with47_48_integrated_nd2117slcl_dims15_res0.9_prepsct.rds
-    • sl2_cl_downstream.Rmd
-        ◦ with47_48_integrated_nd2117slcl_dims15_res0.9_prepsct.rds
-    • sl2_cl_integration.Rmd 
+### Sri Lankan (SL) Cutaneous Leishmaniasis (CL) - Visium
+
+    1. sl2_cl_integration.Rmd 
+    2. sl2_cl_downstream.Rmd
+         * with47_48_integrated_nd2117slcl_dims15_res0.9_prepsct.rds
+    3. sl2_cl_cell2location.Rmd
+         * with47_48_integrated_nd2117slcl_dims15_res0.9_prepsct.rds
