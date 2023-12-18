@@ -22,7 +22,6 @@ Key words: Human cutaneous leishmaniasis, Host directed therapy, skin, IL-32, CD
 
 Human cutaneous leishmaniasis (CL) is characterised by chronic skin pathology.  Experimental and clinical data suggest that immune checkpoints (ICs) play a crucial role in disease outcome but the cellular and molecular niches that facilitate IC expression during leishmaniasis are ill-defined.   We previously showed that in Sri Lankan patients with CL two ICs, indoleamine 2,3-dioxygenase 1 (IDO1) and programmed death-ligand 1 (PD-L1) are enriched in lesional skin and that reduced PD-L1 expression early after treatment onset predicts cure rate following antimonial therapy.  Here, we use spatial cell interaction mapping to identify IL-32-expressing CD8+ memory cells and regulatory T cells as key components of the IDO1 / PD-L1 niche in a cohort of Sri Lankan CL patients.  This finding was confirmed in patients with distinct forms of dermal leishmaniasis in Brazil and India.  Furthermore, in our Sri Lankan cohort the abundance of IL-32+ cells and IL-32+CD8+ T cells at treatment onset was prognostic for rate of cure.  This study provides a unique spatial perspective on the expression of key ICs in these important skin diseases and a novel route to identify biomarkers of treatment response.  
 
-# Instructions for generating figures and analysis for leish-ME
 
 ## Software requirements: 
 
@@ -158,3 +157,18 @@ loaded via a namespace (and not attached):
 [103] codetools_0.2-18      lambda.r_1.2.4        MASS_7.3-55           gtools_3.9.4          chron_2.3-61          withr_2.5.2          
 [109] sctransform_0.4.1     mgcv_1.8-39           parallel_4.1.2        tidyr_1.3.0           carData_3.0-5         Rtsne_0.16           
 [115] shiny_1.7.5.1       
+
+#### Running time: All R files run sequentially will take approximately 2 hours to run on a windows computer with 64GB RAM on a 4 core 3.4GHz machine 
+
+#### Data files to run the analysis are available on Zenodo
+
+# Instructions for generating figures and analysis for leish-ME
+
+## Description of technology used, associated code file and object it is dependent on
+
+Sri Lankan (SL) Cutaneous Leishmaniasis (CL) - Visium
+    • sl2_cl_cell2location.Rmd
+        ◦ with47_48_integrated_nd2117slcl_dims15_res0.9_prepsct.rds
+    • sl2_cl_downstream.Rmd
+        ◦ with47_48_integrated_nd2117slcl_dims15_res0.9_prepsct.rds
+    • sl2_cl_integration.Rmd 
