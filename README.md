@@ -3,18 +3,18 @@
 
 # IL-32 producing CD8+ memory T cells and Tregs define the IDO1/PD-L1 niche in human cutaneous leishmaniasis skin lesions.
 
-### Nidhi S. Dey<sup>1</sup>, Shoumit Dey1, Naj Brown1, Sujai Senarathne2, Luiza Campos Reis3,¥, Ritika Sengupta4, Jose Angelo L. Lindoso5,6, Sally James5, Lesley Gilbert5, Mitali Chatterjee4, Hiro Goto3, Shalindra Ranasinghe2 and Paul M. Kaye1*
+### Nidhi S. Dey<sup>1</sup>, Shoumit Dey<sup>1</sup>, Naj Brown<sup>1</sup>, Sujai Senarathne<sup>2</sup>, Luiza Campos Reis<sup>3,¥</sup>, Ritika Sengupta<sup>4</sup>, Jose Angelo L. Lindoso<sup>5,6</sup>, Sally James<sup>5</sup>, Lesley Gilbert<sup>5</sup>, Mitali Chatterjee<sup>4</sup>, Hiro Goto<sup>3</sup>, Shalindra Ranasinghe<sup>2</sup> and Paul M. Kaye<sup>1*</sup>
 
-1York Biomedical Research Institute and Skin Research Centre, Hull York Medical School, University of York, UK.
-2Department of Parasitology, Faculty of Medical Sciences, University of Sri Jayewardenepura, Sri Lanka.
-3Department of Preventive Medicine, Instituto de Medicina Tropical de São Paulo, Faculdade de Medicina, Universidade de São Paulo, Brazil.
-4Department of Pharmacology, Institute of Postgraduate Medical Education and Research, Kolkata, India. 
-5Secretaria de Saúde do Estado de São Paulo, Instituto de Infectologia Emílio Ribas, São Paulo, SP, Brasil 
-6University of São Paulo, Faculty of Medicine, Department of Infectious and Parasitic Diseases, São Paulo, SP, Brazil.
-7Technology Facility, Department of Biology, University of York, York, YO10 5DD
+<sup>1</sup>York Biomedical Research Institute and Skin Research Centre, Hull York Medical School, University of York, UK.
+<sup>2</sup>Department of Parasitology, Faculty of Medical Sciences, University of Sri Jayewardenepura, Sri Lanka.
+<sup>3</sup>Department of Preventive Medicine, Instituto de Medicina Tropical de São Paulo, Faculdade de Medicina, Universidade de São Paulo, Brazil.
+<sup>4</sup>Department of Pharmacology, Institute of Postgraduate Medical Education and Research, Kolkata, India. 
+<sup>5</sup>Secretaria de Saúde do Estado de São Paulo, Instituto de Infectologia Emílio Ribas, São Paulo, SP, Brasil 
+<sup>6</sup>University of São Paulo, Faculty of Medicine, Department of Infectious and Parasitic Diseases, São Paulo, SP, Brazil.
+<sup>7</sup>Technology Facility, Department of Biology, University of York, York, YO10 5DD
 
-*Correspondence:  Paul M. Kaye, paul.kaye@york.ac.uk
-¥ Current address: Escuela Profesional de Medicina Humana, Facultad de Medicina, Universidad Nacional Toribio Rodríguez de Mendoza de Amazonas, Chachapoyas, Peru.
+<sup>*</sup>Correspondence:  Paul M. Kaye, paul.kaye@york.ac.uk
+<sup>¥</sup> Current address: Escuela Profesional de Medicina Humana, Facultad de Medicina, Universidad Nacional Toribio Rodríguez de Mendoza de Amazonas, Chachapoyas, Peru.
 
 Key words: Human cutaneous leishmaniasis, Host directed therapy, skin, IL-32, CD8 memory T cells, Regulatory T cells, Prognosis, Spatial Transcriptomics, IDO1, PD-L1, myeloid cells.
 
