@@ -319,4 +319,7 @@ Cell2location v0.1 (https://cell2location.readthedocs.io/en/latest/) was run by 
 
     adata_vis.obs[adata_vis.uns['mod']['factor_names']] = adata_vis.obsm['q05_cell_abundance_w_sf']
 
-    You can write this as a CSV file to explore abundances further.
+    You can write this as a CSV file to explore abundances further as in sl2_cl_cell2location.Rmd
+
+# License
+## This project is covered under the MIT License.
