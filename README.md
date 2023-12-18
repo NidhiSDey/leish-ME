@@ -3,7 +3,7 @@
 
 # IL-32 producing CD8+ memory T cells and Tregs define the IDO1/PD-L1 niche in human cutaneous leishmaniasis skin lesions.
 
-### Nidhi S. Dey<sup>1</sup>, Shoumit Dey<sup>1</sup>, Naj Brown<sup>1</sup>, Sujai Senarathne<sup>2</sup>, Luiza Campos Reis<sup>3,¥</sup>, Ritika Sengupta<sup>4</sup>, Jose Angelo L. Lindoso<sup>5,6</sup>, Sally James<sup>5</sup>, Lesley Gilbert<sup>5</sup>, Mitali Chatterjee<sup>4</sup>, Hiro Goto<sup>3</sup>, Shalindra Ranasinghe<sup>2</sup> and Paul M. Kaye<sup>1*</sup>
+### Nidhi S. Dey <sup>1</sup>, Shoumit Dey <sup>1</sup>, Naj Brown<sup>1</sup>, Sujai Senarathne<sup>2</sup>, Luiza Campos Reis<sup>3,¥</sup>, Ritika Sengupta<sup>4</sup>, Jose Angelo L. Lindoso<sup>5,6</sup>, Sally James<sup>5</sup>, Lesley Gilbert<sup>5</sup>, Mitali Chatterjee<sup>4</sup>, Hiro Goto<sup>3</sup>, Shalindra Ranasinghe<sup>2</sup> and Paul M. Kaye<sup>1*</sup>
 
 <sup>1</sup>York Biomedical Research Institute and Skin Research Centre, Hull York Medical School, University of York, UK.
 <sup>2</sup>Department of Parasitology, Faculty of Medical Sciences, University of Sri Jayewardenepura, Sri Lanka.
