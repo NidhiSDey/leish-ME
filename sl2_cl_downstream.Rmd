@@ -82,8 +82,8 @@ pdf(paste0(save_path, "Fig1C_original_identities.pdf"))
   DimPlot(nd2117SLCL_skin_merged, reduction = "umap", pt.size = 1.5, shuffle = TRUE, group.by = "sample_label", label.size = 6)  
 dev.off()
 
-#Ext_Data Fig 1C
-pdf(paste0(save_path, "Ext_Data_Fig1C_original_identities.pdf"))
+#Supplemnetary_Fig 1C
+pdf(paste0(save_path, "Supplemnetary_Fig1C_original_identities.pdf"))
   VlnPlot(nd2117SLCL_skin_merged, features = "nFeature_Spatial", group.by = "sample_label") +
     NoLegend() +
     geom_hline(aes(yintercept = 4104), col = "red", linewidth = 0.3) +
@@ -110,7 +110,7 @@ pdf(paste0(save_path, "Fig1E_heatmap_allclusters_reindented",dims,"_res",res,".p
   DoHeatmap(nd2117SLCL_skin_merged, features = top10$gene, group.colors = my_cols1) + NoLegend()
 dev.off()
 
-#Fig 1F and Ext Data Fig 1d
+#Fig 1F and Supplementary Fig 1d
 pdf(paste0(save_path, "Fig1F_SpatialDimPlot_labelledindents_PC1to",dims,"res",res,".pdf"))
   x<-SpatialDimPlot(nd2117SLCL_skin_merged,crop = FALSE, pt.size.factor = 1, image.alpha = 0,label = FALSE, label.size = 3, repel = TRUE, cols = my_cols1) 
   y<-SpatialDimPlot(nd2117SLCL_skin_merged, alpha = c(0.9, 0.9), crop = FALSE, pt.size.factor = 0.9, cols = my_cols1)
@@ -122,7 +122,7 @@ pdf(paste0(save_path, "Fig1F_SpatialDimPlot_labelledindents_PC1to",dims,"res",re
   }
 dev.off() 
 
-#THE FOLOWING GRAPHS ARE THE BASIS OF Fig 1G,H and Ext_Data. Fig 1 e-k (left panels) and Supplementary Fig 2
+#THE FOLOWING GRAPHS ARE THE BASIS OF Fig 1J and Ext_Data. Fig 1 H-i (left panels) and Supplementary Fig 2
 Idents(nd2117SLCL_skin_merged) <- nd2117SLCL_skin_merged$morpho
 int.genes <- c("IDO1","CD274","KRT14", "CCL18", "JCHAIN", "COL1A1", "CCL19", "CHIT1", "SPARCL1")
 for (genes in int.genes){
@@ -145,14 +145,14 @@ for (genes in int.genes){
   dev.off()
 }
 
-#DATA FOR FIG 1I
+#DATA FOR FIG 1J
 my1my2my3 <- subset(nd2117SLCL_skin_merged, subset = morpho %in% c("My1","My2","My3"))
 fig1i<-VlnPlot(my1my2my3, features = c("IDO1","CD274"), group.by = "morpho")
 #use the following dataframes on Graphpad to gene
 ido1_across_my1my2my3<-fig1i[[1]][["data"]]
 pdl1_across_my1my2my3<-fig1i[[2]][["data"]]
 
-#THE FOLOWING GRAPHS CONTRIBUTE TO Ext_Data. Fig 1 e-k (right panels)
+#THE FOLOWING GRAPHS CONTRIBUTE TO  Supplementary Fig 1 e-k (right panels)
 ## plotting each cluster separately on 40i
 cluster_set <-CellsByIdentities(nd2117SLCL_skin_merged)
 ## KC1 and KC2
@@ -215,7 +215,7 @@ print(paste0("Time elapsed: ", sprintf((time_taken[3]/60), fmt = '%#.2f')," minu
 ```
 
 ```{r enhanced_volcano}
-#SUPPLEMENTARY Fig 1a and 1b
+#Fig 1g and S3A
 lst_gene_lists <- c("my2_rich_markers", "my3_rich_markers")
 
 for(list in lst_gene_lists){
