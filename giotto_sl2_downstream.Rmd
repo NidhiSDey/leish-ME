@@ -148,7 +148,7 @@ spatPlot2D(gobject = P3, cell_color = 'checkpoint',point_size = 1.5, select_cell
 
 ```
 ####################################################################################################################
-#Ext Fig 6a/b/ + Main Figure 4c
+#Figure 4c
 The following is a sanity check. There should be no cells that aren't myeloid and labelled either as double positive, pdl1_high or ido1_high
 ```{r cell types in ido1 pdl1 myeloid cells}
 
@@ -168,10 +168,10 @@ write.csv(table6, paste0(save_path, "prc_celltypes_in_mye_ido1pdl1cells.csv"))
 
 
 ```
-### Step 4 (following on from the chunk above #Ext Fig 6a/b/ + Main Figure 4c: plot network stats and create network and assign neighbours
+### Step 4 (following on from Main Figure 4c: plot network stats and create network and assign neighbours
 ```{r Step4}
-#Ext_Data_Fig_6c-d
-plotStatDelaunayNetwork(gobject = gem_nomix, maximum_distance = 400, save_plot = T, save_param = list(save_name = 'Ext_Data_Fig_6c-d_dealunay_network_stats.pdf', save_folder = 'niche_plots/',save_format = 'pdf',
+#Fig 4D
+plotStatDelaunayNetwork(gobject = gem_nomix, maximum_distance = 400, save_plot = T, save_param = list(save_name = 'Fig 4d_dealunay_network_stats.pdf', save_folder = 'niche_plots/',save_format = 'pdf',
                            units = 'in',
                            base_height = 9,
                            base_width = 7))
@@ -264,7 +264,7 @@ P3 = addCellMetadata(P3,
 # P3 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
 
 #plot neighbours onto P3
-#Ext_Data_Fig6e-f and Fig.4f
+#Fig.4g-i
 spatPlot2D(gobject = P3, cell_color = 'ido1_neighbour',point_size = 1.5, select_cell_groups = c("both", "neighbor", "others", "source"), cell_color_code= c("both"="#E31A1C", "others"= "#D9D9D9", "neighbor"= "green", "source" = "black"), show_legend = TRUE,point_shape = c("border"),save_param = list(save_name = 'Ext_Data_Fig6e_P3_mye_ido1_k_4_neighbour.pdf', save_folder = 'niche_plots/',save_format = 'pdf',
                            units = 'in',
                            base_height = 9,
@@ -282,7 +282,7 @@ spatPlot2D(gobject = P3, cell_color = 'ido1pdl1_neighbour',point_size = 1.0, sel
 
 
 ##################################################################################################################
-##Data for UpsetR plots Fig. 4f and Ext Data Fig 6 g-h
+##Data for UpsetR plots Fig. 4g-i
 ## for checkpoint
 checkpoint_interaction_map<-checkpoint_interaction_map[,c("from","from_cell_type","to_cell_type")]
 pdl1checkpoint_data <- checkpoint_interaction_map[checkpoint_interaction_map$from_cell_type=="PDL1_high_IDO1_low",]
@@ -347,22 +347,22 @@ ido1pdl1checkpoint_source = subsetGiotto(gem_nomix, cell_ids = ido1pdl1checkpoin
 # ido1checkpoint_neigh_source = subsetGiotto(gem_nomix, cell_ids = c(ido1checkpoint_source_cell_IDs,ido1checkpoint_neigh_cell_IDs))
 # pdl11checkpoint_neigh_source = subsetGiotto(gem_nomix, cell_ids = c(pdl1checkpoint_source_cell_IDs,pdl1checkpoint_neigh_cell_IDs))
 ### violin plots of cytokines 
-## pdl1 Ext_Data_Fig6l
+## pdl1 Fig6g
 pdl1check_neigh_violin <-violinPlot(pdl1checkpoint_neigh, feats = c("CCL18", "IL24", "IL1B", "IFNGR2", "CXCL9", "IL32", "TNFSF14", "FASLG"), cluster_column = 'checkpoint', strip_position = 'right', 
-           save_param = list(save_name = 'Ext_Data_Fig6l_PDL1_myeloid_checkpoint_neigh_source.pdf', save_folder = 'Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix',save_format = 'pdf',
+           save_param = list(save_name = 'Fig6g_PDL1_myeloid_checkpoint_neigh_source.pdf', save_folder = 'Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix',save_format = 'pdf',
                            units = 'in',
                            base_height = 9,
                            base_width = 12))
 
 pdl1check_source_violin<-violinPlot(pdl1checkpoint_source, feats = c("CCL18", "IL24", "IL1B", "IFNGR2", "CXCL9", "IL32",  "TNFSF14", "FASLG"), cluster_column = 'checkpoint', strip_position = 'right', 
-           save_param = list(save_name = 'PDL1_myeloid_checkpoint_source.pdf', save_folder = 'Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix',save_format = 'pdf',
+           save_param = list(save_name = 'Fig6g_PDL1_myeloid_checkpoint_source.pdf', save_folder = 'Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix',save_format = 'pdf',
                            units = 'in',
                            base_height = 9,
                            base_width = 8))
 
-## ido1 Ext_Data_Fig6k
+## ido1 Fig6h
 violinPlot(ido1checkpoint_neigh, feats = c("CCL18", "IL24", "IL1B", "IFNGR2", "CXCL9", "IL32",  "TNFSF14", "FASLG"), cluster_column = 'checkpoint', strip_position = 'right', 
-           save_param = list(save_name = 'Ext_Data_Fig6k_ido1_myeloid_checkpoint_neigh.pdf', save_folder = 'Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix',save_format = 'pdf',
+           save_param = list(save_name = 'Fig6h_ido1_myeloid_checkpoint_neigh.pdf', save_folder = 'Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix',save_format = 'pdf',
                            units = 'in',
                            base_height = 9,
                            base_width = 12))
@@ -401,7 +401,7 @@ write.csv(ido1pdl1check_source_violindata, paste0(my_working_dir, "/Seurat/cosmx
 
 ```{r T cell profiles}
 
-##Ext_Data_Fig_6m
+##Ext_Data_Fig_6i
 ido1_pdl1_neigh_cellmetadata <- pDataDT(ido1pdl1checkpoint_neigh)
 ido1pdl1checkpoint_neigh_CD8_Treg_cell_IDs <- ido1_pdl1_neigh_cellmetadata$cell_ID[ido1_pdl1_neigh_cellmetadata$clusterf %in% c("T_CD8_mem", "Treg")]
 ido1pdl1checkpoint_CD8T_Treg = subsetGiotto(ido1pdl1checkpoint_neigh, cell_ids = ido1pdl1checkpoint_neigh_CD8_Treg_cell_IDs)
@@ -419,7 +419,7 @@ topgini_genes = unique(t_markers[, head(.SD, 10), by = 'cluster']$feats)
 topgini_genes_2 <- append(topgini_genes, values = c("GZMB", "GZMK", "IL16", "LTB", "LTR", "CSTW", "KLRK1", "MALAT1", "NEAT1", "SRGN", "GZMA", "MAF", "PRF1", "GNLY", "IL2RB", "IL2RA", "LAG3", "SELL", "CCR7", "CD69"))
 plotMetaDataHeatmap(ido1pdl1checkpoint_CD8T_Treg, expression_values = 'scaled',
                     metadata_cols = c('clusterf'),show_values = c("original"),
-                    selected_feats = topgini_genes_2 , save_param = list(save_name = 'Ext_Data_Fig_6m_t_gem_neigh_heatmap.pdf', save_folder = 'Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix',save_format = 'pdf',
+                    selected_feats = topgini_genes_2 , save_param = list(save_name = 'Fig_6i_gem_neigh_heatmap.pdf', save_folder = 'Seurat/cosmx_seurat_withtcellidents_reedited_03Apr/gem_nomix',save_format = 'pdf',
                            units = 'in',
                            base_height = 9,
                            base_width = 12))
@@ -505,7 +505,7 @@ spatPlot(smallfov, cell_color = 'ido1pdl1_cd8',show_network = T,point_size = 3,n
          legend_symbol_size = 3,   other_cell_color = "darkgrey", background_color = "black",
   other_point_size = 0.5, cell_color_code = c("select_IDO1_PDL1_doublepos"="#FFC0CB", "other_IDO1_PDL1_doublepos"= "#808000", "select_T_CD8_mem"= "#FF0000", "other_T_CD8_mem" = "#008080"), 
   save_param = list(save_folder = 'niche_plots/', # Create subdirectory
-                           save_name = 'Fig4g_select_interactions_ido1pdl1_doublepos_cd8_mem',
+                           save_name = 'Fig5a_select_interactions_ido1pdl1_doublepos_cd8_mem',
                            save_format = 'pdf',
                            units = 'in',
                            dpi = 600,
@@ -517,7 +517,7 @@ spatPlot(smallfov, cell_color = 'ido1pdl1_treg',show_network = T,point_size = 3,
          legend_symbol_size = 3,   other_cell_color = "#808080", background_color = "black", 
   other_point_size = 0.5, cell_color_code = c("select_IDO1_PDL1_doublepos"="#FFC0CB", "other_IDO1_PDL1_doublepos"= "#808000", "select_Treg"= "#FF00FF", "other_Treg" = "#0000CD"), 
   save_param = list(save_folder = 'niche_plots/', # Create subdirectory
-                           save_name = 'Fig4h_select_interactions_ido1pdl1_treg',
+                           save_name = 'Fig5b_select_interactions_ido1pdl1_treg',
                            save_format = 'pdf',
                            units = 'in',
                            dpi = 600,
@@ -531,7 +531,7 @@ spatPlot(smallfov, cell_color = 'ido1pdl1_ccl18',show_network = T,point_size = 3
          legend_symbol_size = 3,   other_cell_color = "darkgrey", background_color = "black",
   other_point_size = 0.5, cell_color_code = c("select_IDO1_PDL1_doublepos"="#FFC0CB", "other_IDO1_PDL1_doublepos"= "#808000", "select_inf_mac2_CCL18_mac"= "#00BFFF", "other_inf_mac2_CCL18_mac" = "#800080"), 
   save_param = list(save_folder = 'niche_plots/', # Create subdirectory
-                           save_name = 'Fig4i_select_interactions_ido1pdl1_doublepos_ccl18_mac',
+                           save_name = 'Fig5c_select_interactions_ido1pdl1_doublepos_ccl18_mac',
                            save_format = 'pdf',
                            units = 'in',
                            dpi = 600,
