@@ -122,7 +122,7 @@ pdf(paste0(save_path, "Fig1F_SpatialDimPlot_labelledindents_PC1to",dims,"res",re
   }
 dev.off() 
 
-#THE FOLOWING GRAPHS ARE THE BASIS OF Fig 1J and Ext_Data. Fig 1 H-i (left panels) and Supplementary Fig 2
+#THE FOLOWING GRAPHS ARE THE BASIS OF Fig 1H-I and Ext_Data. Fig 1 H-i (left panels) and Supplementary Fig 2
 Idents(nd2117SLCL_skin_merged) <- nd2117SLCL_skin_merged$morpho
 int.genes <- c("IDO1","CD274","KRT14", "CCL18", "JCHAIN", "COL1A1", "CCL19", "CHIT1", "SPARCL1")
 for (genes in int.genes){
@@ -215,7 +215,7 @@ print(paste0("Time elapsed: ", sprintf((time_taken[3]/60), fmt = '%#.2f')," minu
 ```
 
 ```{r enhanced_volcano}
-#Fig 1g and S3A
+#Fig 1g and S2A
 lst_gene_lists <- c("my2_rich_markers", "my3_rich_markers")
 
 for(list in lst_gene_lists){
@@ -270,7 +270,7 @@ nd2117SLCL_skin_merged@meta.data$ido1pdl1[nd2117SLCL_skin_merged@meta.data$spot_
 ```
 
 ```{r spatial plots of ido1 and pdl1}
-#Fig 3B and Ext Data Fig 5A
+#Fig 3B 
 pdf(paste0(save_path, "47_48_ido1_pdl1_spatialplot_ido11dot1pdldot5.pdf"), height = 5, width=5)  
 x<- SpatialPlot(nd2117SLCL_skin_merged, group.by= "ido1pdl1", image.alpha = 0.3, crop = F, pt.size.factor = 1, cols = c("ido1_spots"="#6495ED","ido1_pdl1_spots" = "#FF1493","pdl1_spots"= "#FFA500","rest_of_the_spots" = "#E6E6FA"))
  for(i in 1:6){
@@ -296,7 +296,7 @@ write.csv(n[["data"]], paste0(save_path, "ido1pdl1_lineplot_data_top50de_for_gra
 ```
 
 ```{r plotting cytokines etc in Fig 3}
-##Ext Data Fig. 5f-j and Fig.3 d-k
+##and Fig.3 d-k, m-o
 interesting_genes<- c("CCL18","IL1B","IL24","CXCL9","CXCL14","IL32","TNFRSF6B","IFNGR2","CCL19","LTB","CCR7","CXCL13","PDGFRB","CXCL12")
 
 for (interesting_gene in interesting_genes){
@@ -352,7 +352,7 @@ SpatialFeaturePlot(nd2117SLCL_skin_merged, features = "IFNG", alpha = c(5, 5), c
 ```
 
 ```{r cytokines}
-##Extended Data Fig. 5e
+##Supplementary fig s4
 # cytokines
 
 sig_ido1pdl1markergenes <- read.csv(paste0(save_path, "ido1pdl1markergenespval0.05.csv"))
@@ -378,19 +378,19 @@ inf_tnf_tgf <- c(interferons, tnfs, tgfs)
 inf_tnf_tgf <- sort(inf_tnf_tgf)
 inf_tnf_tgf <- unique(inf_tnf_tgf)
 
-pdf(paste0(save_path, "Fig5e_ido1_pdl1_spots_dot_plots_DE_chemokines.pdf"))
+pdf(paste0(save_path, "Suppl_Fig4a_ido1_pdl1_spots_dot_plots_DE_chemokines.pdf"))
   x<-DotPlot(nd2117SLCL_skin_merged, features = unique(chemokines), group.by = "ido1pdl1", scale = TRUE, scale.min = 0, col.min = 0, col.max = 1.5) + RotatedAxis() + coord_flip() + theme(axis.title.x=element_blank(), axis.title.y=element_blank())
   Fig1 <- ggarrange(x,ncol = 1,nrow = 1)
   print(Fig1)
 dev.off()
 
-pdf(paste0(save_path, "Fig5e_nd2117SLCL_skin_merged_IDO1PDL1_dot_plots_interleukins.pdf"))
+pdf(paste0(save_path, "Suppl_Fig4a_nd2117SLCL_skin_merged_IDO1PDL1_dot_plots_interleukins.pdf"))
   x<-DotPlot(nd2117SLCL_skin_merged, features = interleukins, group.by = "ido1pdl1", scale = TRUE, scale.min = 0, col.min = 0, col.max = 1.5) + RotatedAxis() + coord_flip() + theme(axis.title.x=element_blank(),axis.title.y=element_blank()) 
   Fig1 <- ggarrange(x,ncol = 1,nrow = 1)
   print(Fig1)
 dev.off()
 
-pdf(paste0(save_path, "Fig5e_nd2117SLCL_skin_merged_IDO1PDL1_dot_plots_DE_inf_tnf_tgf.pdf"))
+pdf(paste0(save_path, "Suppl_Fig4a_nd2117SLCL_skin_merged_IDO1PDL1_dot_plots_DE_inf_tnf_tgf.pdf"))
   x<-DotPlot(nd2117SLCL_skin_merged, features = inf_tnf_tgf, group.by = "ido1pdl1", scale = TRUE, scale.min = 0, col.min = 0, col.max = 1.5) + RotatedAxis() + coord_flip() + theme(axis.title.x=element_blank(),axis.title.y=element_blank()) 
   
   Fig1 <- ggarrange(x,ncol = 1,nrow = 1)
@@ -400,7 +400,7 @@ dev.off()
 ###extracted ICs from significant gene list
 immune_checks <- c("CTLA4","PDCDLG2","LAG3","CD40","HAVCR2","LILRB2","LILRB4", "CD86", "CD80", "TNFRSF4", "CD276", "CD28" )
 
-pdf(paste0(save_path, "Fig5e_nd2117SLCL_skin_merged_dot_plots_ido1pdl1_checkpoints.pdf"))
+pdf(paste0(save_path, "Suppl_Fig4_nd2117SLCL_skin_merged_dot_plots_ido1pdl1_checkpoints.pdf"))
   #for(cluster in 0:3){
     x<-DotPlot(nd2117SLCL_skin_merged, features = immune_checks, group.by = "ido1pdl1", scale = TRUE, scale.min = 0, col.min = 0, col.max = 1.5) + RotatedAxis() + coord_flip() + theme(axis.title.x=element_blank(),
                 axis.title.y=element_blank())
@@ -462,7 +462,7 @@ fn_get_corr_mat <- function(obj, gene_name){
   list_corr_mat <- correlation_df_list
   return(list_corr_mat)
 }
-#DATA FOR Fig 5 venn diagram; 5j-k
+#DATA FOR Fig 7m venn diagram; 
 #code to run the function for PDL1##################################################
 gene_name<-"CD274"
 
@@ -479,7 +479,7 @@ write.table(list_corr_mat[[paste0("acorr_", gene_name)]], file = paste0(save_pat
 
 rm(list_corr_mat)
 ####################################################################################
-#DATA FOR 5 venn diagram; 5j-k
+#DATA FOR 7 venn diagram; 
 #code to run the function for IDO1 #################################################
 gene_name<-"IDO1"
 
@@ -494,23 +494,4 @@ write.table(list_corr_mat[[paste0("acorr_", gene_name)]], file = paste0(save_pat
 
 rm(list_corr_mat)
 ####################################################################################
-###example bar plot
-ido1_df<- data.frame(corr= c(0.663807792,0.656694304,0.655527144,0.653921913,0.645821463,0.643203308,0.643118654,0.630901051,0.630550324,0.630154913), gene=c("GBP5",
-"SOD2","WARS","MMP3","LYZ","IFI30","MMP1","SRGN","SLC39A8","MT2A"))
-pdl1_df<- data.frame(corr= c(0.57445677,0.561674883,0.555248236,0.554009677,0.553597113,0.550140168,0.549784703,0.545359334,0.54056152,0.539830465), gene=c("WARS","LYZ","C15orf48","SOD2","MMP3","IFI30","CAPG","PFN1","CTSB","GLUL"))
-
-p<-ggplot(data=ido1_df, aes(x = reorder(gene, +corr), y=corr)) +
-  geom_bar(stat="identity") + ylim(c(0,1))
-p + coord_flip()
-
-q<-ggplot(data=pdl1_df, aes(x = reorder(gene, +corr), y=corr)) +
-  geom_bar(stat="identity") + ylim(c(0,1))
-q + coord_flip()
-
-# Stop the clock
-time_taken<- proc.time() - ptm
-print(paste0("Time elapsed: ", sprintf((time_taken[3]/60), fmt = '%#.2f')," minutes"))
-```
-
-
 
