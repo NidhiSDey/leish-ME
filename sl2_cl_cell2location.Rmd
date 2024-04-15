@@ -84,7 +84,7 @@ df_sorted <- df[, order(df_median, decreasing = T)]
 #Showing the top 20 most abundant cell types only
 df_melt <- melt(df_sorted[,1:20])
 
-pdf(paste0(save_path, "sorted_all_box_cell2space_sd22.2.1.pdf"), height = 10, width=7)
+pdf(paste0(save_path, "Fig.1k_sorted_all_box_cell2space_sd22.2.1.pdf"), height = 10, width=7)
   ggplot(data = df_melt, aes(x = value, y = variable, fill = variable)) + 
         geom_boxplot() + 
         coord_flip()  + 
@@ -100,8 +100,8 @@ nd2117SLCL_skin_merged<-AddMetaData(nd2117SLCL_skin_merged, metadata = cell2loca
 
 ```
 
-```{r Extended_data_figure_2}
-######Extended Data Figure 2a
+```{r Supple_figure_2B}
+######Supplementary Fig. 2B 
 items_to_process<-c("30i","35i","40i","48i","53i","47i")
 listGraphs <- list()
 
@@ -134,14 +134,14 @@ for(item in items_to_process){
   listGraphs[[item]] <- print_item
 }
   
-pdf(paste0(save_path,"Ext_Data_Fig_2a_patient_sorted_all_box_cell2space_sd22.2.1.pdf"), height = 10, width=7)  
+pdf(paste0(save_path,"Supplementary Fig_2b_patient_sorted_all_box_cell2space_sd22.2.1.pdf"), height = 10, width=7)  
   ggarrange(plotlist = listGraphs, ncol = 2, nrow = 3)
 dev.off()
 
 #Please note: You may encounter the following warning when running the above. Explanation for this is that we ahev exlcuded plotting 15 outliying spots in patient by patient plots to keep the maximum y-axis value at 30.
 # Warning: Removed 2 rows containing non-finite values (`stat_boxplot()`).Warning: Removed 1 rows containing non-finite values (`stat_boxplot()`).Warning: Removed 12 rows containing non-finite values (`stat_boxplot()`).null device 
 
-#Data extracted for Extended data figure 2b and then plotted on Graphpad
+#Data extracted for Fig. 1L and then plotted on Graphpad
 my1my2my3 <- subset(nd2117SLCL_skin_merged, subset = morpho %in% c("My1","My2","My3"))
 my1my2m3_raw_abundances <- my1my2my3@meta.data[, c("morpho", cell_types)]
 ```
@@ -150,7 +150,7 @@ my1my2m3_raw_abundances <- my1my2my3@meta.data[, c("morpho", cell_types)]
 
 celltypes_thresholded_my1_my2_my3 <-c("DC2","ILC1NK","ILC2","Macro1","Macro2","Mono","NK","Tc","Th","Treg")
 
-pdf(paste0(save_path, "Ext_Data_Fig2c-l_celltypes_thresholded_my1_my2_my3_cell2space_sd22.2.1.pdf"), height =20, width=8)
+pdf(paste0(save_path, "SupplementaryFig.5c-l_celltypes_thresholded_my1_my2_my3_cell2space_sd22.2.1.pdf"), height =20, width=8)
   for(image_count in 1:length(nd2117SLCL_skin_merged@images)){
     image<-names(nd2117SLCL_skin_merged@images)[image_count]
     print(SpatialFeaturePlot(nd2117SLCL_skin_merged, features = celltypes_thresholded_my1_my2_my3, crop = F, image.alpha = 0, pt.size.factor = 1, alpha = c(0.1,2), images =image, ncol = 1, stroke = 0))
@@ -167,7 +167,7 @@ ido_intercept <- 1.1
 #higher than zero values as all 
 pdl1_intercept <- 0.5
 
-pdf(paste0(save_path, "pdl1_ido1_overall_scatter.pdf"), height = 5, width=5)
+pdf(paste0(save_path, "Fig.3A_pdl1_ido1_overall_scatter.pdf"), height = 5, width=5)
  FeatureScatter(nd2117SLCL_skin_merged, feature1 = "IDO1", feature2 = "CD274",  jitter=3) + NoLegend() + geom_vline(aes(xintercept = (ido_intercept+0.1)), col = "red") + geom_hline(aes(yintercept = pdl1_intercept), col = "red")
 dev.off()
 
@@ -233,7 +233,7 @@ for(item in items_to_process){
 
 }
 
-pdf(paste0(save_path,"Ext_Data_Fig_5b-d_ido1pdl1_sorted_all_box_cell2space_sd22.2.1.pdf"), height = 10, width=7)
+pdf(paste0(save_path,"Fig3L_ido1pdl1_sorted_all_box_cell2space_sd22.2.1.pdf"), height = 10, width=7)
   ggarrange(plotlist = listGraphs, ncol = 2, nrow = 2)
 dev.off()
 ```
