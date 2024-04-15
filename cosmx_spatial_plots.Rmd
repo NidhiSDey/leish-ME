@@ -64,25 +64,9 @@ P3.crop <- Crop(cosmx[["P3"]], x = c(-165000, -160000), y = c(-2000, -6000))
 cosmx[["TLO1"]] <- P3.crop
 DefaultBoundary(cosmx[["TLO1"]]) <- "segmentation"
 
-#FIGURE 2B
-pdf(paste0(save_path, "Fig2b_imagedimplot_P3_nb_clus.pdf"), 30, 15)
+#FIGURE 2E
+pdf(paste0(save_path, "Fig2E_imagedimplot_P3_nb_clus.pdf"), 30, 15)
   ImageDimPlot(cosmx, fov = "P3", cols = c("Mac_rich"="#E7298A", "macrophage"= "#FF7F00","inf_mac2"= "#FFC0CB", "pDC"= "#FB8072","neutrophil_rich"= "#800000","mDC"= "#A65628", "mast"= "#FFD700", "Igg_rich"= "#1B9E77", "B-cell"= "#006400", "plasmablast"= "#00FF00","fib_rich"= "#7FFFD4", "fibroblast"= "#00FFFF","ker_1"= "#F5DEB3", "ker_2"= "#F0F8FF", "ker_3"= "#FFE4E1","endothelial"= "#E41A1C", "Treg"= "#6495ED",  "NK"= "#00BFFF",   "T_CD4_mem"= "#8B008B", "T_CD4_naive"= "#DDA0DD", "T_CD8_mem"= "#000080", "T_CD8_naive"= "#ADD8E6"), coord.fixed = F, group.by = "nb_clus", axes =T, border.size = 0.1)
-dev.off()
-
-
-#SUPPLEMENTARY FIGURE 3
-pdf(paste0(save_path, "Sup_Fig3a_imagedimplot_P4_nbclus.pdf"), 25, 15)
-  ImageDimPlot(cosmx, fov = "P4", cols = c("Mac_rich"="#E7298A", "macrophage"= "#FF7F00","inf_mac2"= "#FFC0CB", "pDC"= "#FB8072","neutrophil_rich"= "#800000","mDC"= "#A65628", "mast"= "#FFD700", "Igg_rich"= "#1B9E77", "B-cell"= "#006400", "plasmablast"= "#00FF00","fib_rich"= "#7FFFD4", "fibroblast"= "#00FFFF","ker_1"= "#F5DEB3", "ker_2"= "#F0F8FF", "ker_3"= "#FFE4E1","endothelial"= "#E41A1C", "Treg"= "#6495ED",  "NK"= "#00BFFF",   "T_CD4_mem"= "#8B008B", "T_CD4_naive"= "#DDA0DD", "T_CD8_mem"= "#000080", "T_CD8_naive"= "#ADD8E6"), group.by = "nb_clus", coord.fixed = F, axes =T, border.size = 0.1)
-dev.off()
-
-#SUPPLEMENTARY FIGURE 3
-pdf(paste0(save_path, "Sup_Fig3b_imagedimplot_P5_nb_clus.pdf"), 15, 15)
-  ImageDimPlot(cosmx, fov = "P5", cols = c("Mac_rich"="#E7298A", "macrophage"= "#FF7F00","inf_mac2"= "#FFC0CB", "pDC"= "#FB8072","neutrophil_rich"= "#800000","mDC"= "#A65628", "mast"= "#FFD700", "Igg_rich"= "#1B9E77", "B-cell"= "#006400", "plasmablast"= "#00FF00","fib_rich"= "#7FFFD4", "fibroblast"= "#00FFFF","ker_1"= "#F5DEB3", "ker_2"= "#F0F8FF", "ker_3"= "#FFE4E1","endothelial"= "#E41A1C", "Treg"= "#6495ED",  "NK"= "#00BFFF",   "T_CD4_mem"= "#8B008B", "T_CD4_naive"= "#DDA0DD", "T_CD8_mem"= "#000080", "T_CD8_naive"= "#ADD8E6"), coord.fixed = F, group.by = "nb_clus", axes =T, border.size = 0.1)
-dev.off()
-
-#SUPPLEMENTARY FIGURE 3
-pdf(paste0(save_path, "Sup_Fig3c_imagedimplot_P6_nb_clus.pdf"), 25, 20)
-  ImageDimPlot(cosmx, fov = "P6", cols = c("Mac_rich"="#E7298A", "macrophage"= "#FF7F00","inf_mac2"= "#FFC0CB", "pDC"= "#FB8072","neutrophil_rich"= "#800000","mDC"= "#A65628", "mast"= "#FFD700", "Igg_rich"= "#1B9E77", "B-cell"= "#006400", "plasmablast"= "#00FF00","fib_rich"= "#7FFFD4", "fibroblast"= "#00FFFF","ker_1"= "#F5DEB3", "ker_2"= "#F0F8FF", "ker_3"= "#FFE4E1","endothelial"= "#E41A1C", "Treg"= "#6495ED",  "NK"= "#00BFFF",   "T_CD4_mem"= "#8B008B", "T_CD4_naive"= "#DDA0DD", "T_CD8_mem"= "#000080", "T_CD8_naive"= "#ADD8E6"), coord.fixed = F, group.by = "nb_clus", axes =T,border.size = 0.1)
 dev.off()
 
 ```
