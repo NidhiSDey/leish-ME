@@ -39,7 +39,7 @@ ident_colours = c("inf_mac2_CHI3L1_mac"= "dodgerblue2","inf_mac2_CCL18_mac"= "#E
 
 my_cols2 <- ident_colours[order(as.character(names(ident_colours)))]
 
-pdf(paste0(save_path, "FIGURE2c_cosmx_myeloid_sub_clustered_DimPlot.pdf"))
+pdf(paste0(save_path, "FIGURE2f_cosmx_myeloid_sub_clustered_DimPlot.pdf"))
   DimPlot(cosmx_myeloid, reduction = "umap", label = TRUE, pt.size = 0.8, shuffle = TRUE, label.box = TRUE, repel = TRUE, cols = my_cols2) + NoLegend()
 dev.off()
 
@@ -59,7 +59,7 @@ cosmx_myeloid@active.ident <- factor(my_seurat1@active.ident,
                                              "pDC",
                                              "mast"))
 
-pdf(paste0(save_path, "FIGURE2D_cosmx_myeloid_signature.pdf"),14, 8)
+pdf(paste0(save_path, "FIGURE2g_cosmx_myeloid_signature.pdf"),14, 8)
     DotPlot(object = cosmx_myeloid, features = unique(c("C1QC", "C1QB","CD68", "LYZ","SELENOP","SLC40A1","CD163", "CXCL12","CXCL9","IL1B","CXCL10", "CHI3L1",	"PTGDS",	"GPNMB","CCL18","MT2A","CXCL3", "CXCL8", "ITGAM", "DUSP1", "CLEC12A", "CLEC5A","CLEC4E", "MARCO", "NR1H3","CD80","ITGAX","CCL8","CLEC7A","CSF1R", "CLEC10A","CIITA","CD40", "CCR7", "LAMP3", "CD274", "IDO1", "PDCD1LG2", "CD83", "CD86", "CCL19", "SPP1","CLEC5A","KRT6A","KRT6C", "MIF", "PLAC8","S100B","HSP90B1","JCHAIN", "TPSB2", "TPSAB1")))+ 
     RotatedAxis() + 
     theme(axis.title.x=element_blank(), axis.title.y=element_blank()) + 
@@ -68,13 +68,13 @@ dev.off()
 
 AverageExpression(cosmx_myeloid, features = c("IDO1", "CD274", "PDCD1"))
 
-pdf(paste0(save_path, "EXT_DATA_FIGURE4i_cosmx_myeloid_vlnplot_ido1_clusterf.pdf"),5,4)
+pdf(paste0(save_path, "Fig 2h_cosmx_myeloid_vlnplot_ido1_clusterf.pdf"),5,4)
   VlnPlot(cosmx_myeloid, features = "IDO1", ncol=1, pt.size = 0.1, assay = "SCT", cols = my_cols2,raster = FALSE) + 
   NoLegend() + 
   scale_x_discrete(limit=c("DC3",	"moDC2",	"cDC2",	"inf_mac1",	"DC1")) 
 dev.off()
 
-pdf(paste0(save_path, "EXT_DATA_FIGURE4j_cosmx_myeloid_vlnplot_pdl1_clusterf.pdf"),5,4)
+pdf(paste0(save_path, "Fig 2i_cosmx_myeloid_vlnplot_pdl1_clusterf.pdf"),5,4)
   VlnPlot(cosmx_myeloid, features = "CD274", ncol=1, pt.size = 0.1, assay = "SCT", cols = my_cols2,raster = FALSE) + 
   NoLegend() + 
   scale_x_discrete(limit=c("DC3",	"moDC3",	"DC1",	"inf_mac2_CHI3L1_mac", "moDC1")) 
