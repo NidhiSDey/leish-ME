@@ -74,7 +74,7 @@ for (sample in samples){
 
 ```{r data_pre_processing}
 #plot overall counts - not in manuscript
-pdf(file = paste0(save_path, study_name, "h1h2h3_P1_M1_overall_counts.pdf"))
+pdf(file = paste0(save_path, study_name, "P1_M1_overall_counts.pdf"))
   for(object in seuratSpatial){
     plot1 <- VlnPlot(object, features = "nCount_Spatial", pt.size = 0.1) + NoLegend()
     plot2 <- SpatialFeaturePlot(object, features = "nCount_Spatial") + theme(legend.position = "right")
