@@ -183,25 +183,25 @@ spatPlot2D(gobject = P3, cell_color = 'clusterf',point_size = 1.0, select_cell_g
 ```{r plotting different cell populations onto space}
 #table(gem@cell_metadata[["rna"]][["cluster"]])
 
-#Extended data figure 4
+#Supplementary Figure 5C-H
 # fetch metadata from gem
 cell_metadata = pDataDT(gem)
 
 #subset cell_ids on the basis of column patient_id and create P4 giotto obj
-subset_cell_IDs = cell_metadata[patient_id %in% "P4"]$cell_ID
-P4 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
+#subset_cell_IDs = cell_metadata[patient_id %in% "P4"]$cell_ID
+#P4 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
 
 #subset cell_ids on the basis of column patient_id and create P3 giotto obj
 subset_cell_IDs = cell_metadata[patient_id %in% "P3"]$cell_ID
 P3 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
 
 #subset cell_ids on the basis of column patient_id and create P5 giotto obj
-subset_cell_IDs = cell_metadata[patient_id %in% "P5"]$cell_ID
-P5 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
+#subset_cell_IDs = cell_metadata[patient_id %in% "P5"]$cell_ID
+#P5 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
 
 #subset cell_ids on the basis of column patient_id and create P6 giotto obj
-subset_cell_IDs = cell_metadata[patient_id %in% "P6"]$cell_ID
-P6 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
+#subset_cell_IDs = cell_metadata[patient_id %in% "P6"]$cell_ID
+#P6 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
 # fetch metadata from gem
 cell_metadata = pDataDT(gem)
 
@@ -210,8 +210,8 @@ cell_metadata = pDataDT(gem)
 # P1 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
 
 #subset cell_ids on the basis of column patient_id and create P2 giotto obj
-subset_cell_IDs = cell_metadata[patient_id %in% "P3"]$cell_ID
-P2 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
+#subset_cell_IDs = cell_metadata[patient_id %in% "P3"]$cell_ID
+#P2 = subsetGiotto(gem, cell_ids = subset_cell_IDs)
 
 # #subset cell_ids on the basis of column patient_id and create P3 giotto obj
 # subset_cell_IDs = cell_metadata[patient_id %in% "47i"]$cell_ID
