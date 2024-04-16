@@ -205,79 +205,74 @@ loaded via a namespace (and not attached):
 
 | Figure number | File name           
 | ------------- |:-------------:|
-|1a|Images|
-|1b|Images|
-|1c|sl2_cl_downstream.Rmd|
-|1d|sl2_cl_downstream.Rmd|
-|1e|sl2_cl_downstream.Rmd|
-|1f|sl2_cl_downstream.Rmd|
-|1g|sl2_cl_downstream.Rmd|
-|1i|sl2_cl_downstream.Rmd. Plotted in GraphPad|
-|Ext. 1a|Images|
-|Ext. 1b|Images|
-|Ext. 1c|sl2_cl_downstream.Rmd|
-|Ext. 1d|sl2_cl_downstream.Rmd|
-|Ext. 1e-k|sl2_cl_downstream.Rmd|
-|Ext. 2a|sl2_cl_cell2location.Rmd|
-|Ext. 2b|sl2_cl_cell2location.Rmd. Plotted in GraphPad.|
-|Ext. 2c-l|sl2_cl_cell2location.Rmd|
-|2a|giotto_sl2_config.Rmd|
-|2b|cosmx_spatial_plots.Rmd|
-|2c|cosmx_mac_sub_clustered_downstream.Rmd|
-|2d|cosmx_mac_sub_clustered_downstream.Rmd|
-|2e|giotto_sl2_config.Rmd|Ext 3a|Images|
-|Ext. 3b|giotto_sl2_config.Rmd. Plotted in GraphPad|
-|Ext. 3c|giotto_sl2_config.Rmd|
-|Ext. 3d|giotto_sl2_config.Rmd|
-|Ext. 3e|giotto_sl2_config.Rmd|
-|Ext. 3f|giotto_sl2_config.Rmd|
-|Ext. 3g|giotto_sl2_config.Rmd. Plotted in GraphPad|
-|Ext. 4a-h|giotto_sl2_config.Rmd|
-|Ext. 4i-j|cosmx_mac_sub_clustered_downstream.Rmd|
-|3a|sl2_cl_downstream.Rmd|
-|3b|sl2_cl_downstream.Rmd|
-|3c|sl2_cl_downstream.Rmd. Plotted in GraphPad|
-|3d-k|sl2_cl_downstream.Rmd|
-|Ext 5a|sl2_cl_downstream.Rmd|
-|Ext 5b-d|sl2_cl_cell2location.Rmd|
-|Ext 5e|sl2_cl_downstream.Rmd|
-|Ext 5f-j|sl2_cl_downstream.Rmd|
-|4a|giotto_sl2_downstream.Rmd|
-|4b|giotto_sl2_downstream.Rmd|
-|4c|giotto_sl2_downstream.Rmd|
-|4d|Images|4e|giotto_sl2_downstream.Rmd|
-|4f|giotto_sl2_downstream.Rmd. Analysed in Excel, plotted in GraphPad|
-|4g-l|giotto_sl2_downstream.Rmd|
-|4j|Images|4k|Images|4l-q|giotto_sl2_downstream.Rmd|
-|Ext. 6a-b|giotto_sl2_downstream.Rmd|
-|Ext. 6c|giotto_sl2_downstream.Rmd|
-|Ext. 6d|giotto_sl2_downstream.Rmd|
-|Ext. 6e-f|giotto_sl2_downstream.Rmd|
-|Ext. 6g-h|giotto_sl2_downstream.Rmd|
-|Ext 6 i-j|Images|Ext 6k-l|giotto_sl2_downstream.Rmd|
-|Ext 6m|giotto_sl2_downstream.Rmd|
-|Ext. data 7|GraphPad|5a-d|images|5e|br_cl_downstream.Rmd|
-|5f|in_pkdl_downstream.Rmd|
-|5g|br_cl_downstream.Rmd|
-|5h|br_cl_downstream.Rmd|
-|5i|in_pkdl_downstream.Rmd|
-|5j-k|Data from br_cl_downstream.Rmd,in_pkdl_downstream.Rmd and sl2_cl_downstream.Rmd. Plotted in Venny.|
-|Ext. 8 a-c|Images|
-|Ext.8e-f|br_cl_downstream.Rmd|
-|Ext. 8g|in_pkdl_downstream.Rmd|
+|1A|Images|
+|1B|Images|
+|1C|sl2_cl_downstream.Rmd|
+|1D|sl2_cl_downstream.Rmd|
+|1E|sl2_cl_downstream.Rmd|
+|1F|sl2_cl_downstream.Rmd|
+|1G|sl2_cl_downstream.Rmd|
+|1H|sl2_cl_downstream.Rmd|
+|1I|sl2_cl_downstream.Rmd|
+|1J|sl2_cl_downstream.Rmd; plotted in GraphPad|
+|1K|sl2_cl_cell2location.Rmd|
+|1L|sl2_cl_cell2location.Rmd; plotted in GraphPad|
+|Supp. 1A|Images|
+|Supp. 1B|Images|
+|Supp. 1C|sl2_cl_downstream.Rmd|
+|Supp. 1D|sl2_cl_downstream.Rmd|
+|Supp. 1E-K|sl2_cl_downstream.Rmd|
+|Supp. 2A|sl2_cl_downstream.Rmd|
+|Supp. 2B|sl2_cl_downstream.Rmd|
+|Supp. 2C-L|sl2_cl_cell2location.Rmd|
+|2A|Image|
+|2A|giotto_sl2_config.Rmd|
+|2B|giotto_sl2_config.Rmd|
+|2C|giotto_sl2_config.Rmd|
+|2D|giotto_sl2_configcosmx_mac_sub_clustered_downstream.Rmd|
+|2E|cosmx_spatial_plots.Rmd|
+|2F|cosmx_mac_sub_clustered_downstream.Rmd|
+|2G|cosmx_mac_sub_clustered_downstream.Rmd|
+|2H|cosmx_mac_sub_clustered_downstream.Rmd|
+|2I|cosmx_mac_sub_clustered_downstream.Rmd|
+|2J|cosmx_mac_sub_clustered_downstream.Rmd|
+|Supp 3A|Images|
+|Supp. 3B|giotto_sl2_config.Rmd. Plotted in GraphPad|
+|Supp. 3C-H|giotto_sl2_config.Rmd|
+|3A|sl2_cl_downstream.Rmd|
+|3B|sl2_cl_downstream.Rmd|
+|3C|sl2_cl_downstream.Rmd. Plotted in GraphPad|
+|3D-K|sl2_cl_downstream.Rmd|
+|3L|sl2_cl_cell2location.Rmd|
+|3M-O|sl2_cl_downstream.Rmd|
+|Supp. 4A|sl2_cl_downstream.Rmd|
+|4A|giotto_sl2_downstream.Rmd|
+|4B|giotto_sl2_downstream.Rmd|
+|4C|giotto_sl2_downstream.Rmd. Analysed in Excel, plotted in GraphPad|
+|4D|giotto_sl2_downstream.Rmd|
+|4E|giotto_sl2_downstream.Rmd|
+|4F|Image|
+|4G-I|giotto_sl2_downstream.Rmd  Analysed in Excel, plotted in GraphPad and UpsetR shiny app|
+|5|Images, image analysis done in Strataquest and graphed in GraphPad|
+|6A-F|giotto_sl2_downstream.Rmd; Graphed in GraphPad|
+|6G-I|giotto_sl2_downstream.Rmd|
+|6J|Analysed in excel and graphed in GraphPad|
+|7A-D|images|
+|7E|br_cl_downstream.Rmd|
+|7F|in_pkdl_downstream.Rmd|
+|7G|br_cl_downstream.Rmd|
+|7H|in_pkdl_downstream.Rmd|
+|7I|br_cl_downstream.Rmd|
+|7J|in_pkdl_downstream.Rmd|
+|7K|in_pkdl_downstream.Rmd|
+|7L|br_cl_downstream.Rmd|
+|7M|Data from br_cl_downstream.Rmd,in_pkdl_downstream.Rmd and sl2_cl_downstream.Rmd. Plotted in Venny.|
+|Supp. 5A-D|Images|
+|Supp. 5E|in_pkdl_downstream.Rmd|
+|Supp. 5F|in_pkdl_downstream.Rmd|
 |Ext. 8h|in_pkdl_downstream.Rmd|
-|Ext 8i|br_cl_downstream.Rmd|
-|Ext. 8j|in_pkdl_downstream.Rmd|
-|Ext. 9a|br_cl_downstream.Rmd|
-|Ext. 9b|in_pkdl_downstream.Rmd|
-|Ext. 9c-d|br_cl_downstream.Rmd|
-|Ext. 9e-f|in_pkdl_downstream.Rmd|
-|Ext. 9g-h|br_cl_downstream.Rmd|
-|Ext. 9i-j|br_cl_downstream.Rmd|
-|6a-l|Images|
-|Suppl. Fig1|sl2_cl_downstream.Rmd|
-|Suppl. Fig2|sl2_cl_downstream.Rmd|
-|Suppl. Fig 3|cosmx_spatial_plots.Rmd|
+|8A-C|Flow data analysed in FlowJo and graphed in FlowJo and GraphPad|
+|7D-O|Images; using data from source files plotted in R|
 
 ###Figure reproduction - Please use option 2 until publication
 Option1 : Start from scratch using raw 10x files (available post publication)
