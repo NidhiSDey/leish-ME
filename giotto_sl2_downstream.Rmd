@@ -401,7 +401,7 @@ write.csv(ido1pdl1check_source_violindata, paste0(my_working_dir, "/Seurat/cosmx
 
 ```{r T cell profiles}
 
-##Ext_Data_Fig_6i
+##Fig_6i
 ido1_pdl1_neigh_cellmetadata <- pDataDT(ido1pdl1checkpoint_neigh)
 ido1pdl1checkpoint_neigh_CD8_Treg_cell_IDs <- ido1_pdl1_neigh_cellmetadata$cell_ID[ido1_pdl1_neigh_cellmetadata$clusterf %in% c("T_CD8_mem", "Treg")]
 ido1pdl1checkpoint_CD8T_Treg = subsetGiotto(ido1pdl1checkpoint_neigh, cell_ids = ido1pdl1checkpoint_neigh_CD8_Treg_cell_IDs)
