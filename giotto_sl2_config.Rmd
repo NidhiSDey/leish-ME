@@ -130,20 +130,34 @@ write.csv(markers, paste0(my_working_dir, "de_markers_celltypes_gem.csv"))
 topgini_genes = unique(markers[, head(.SD, 2), by = 'cluster']$feats)
 cluster_order = c( 'B-Cell','plasmablast','Igg rich','endothelial', 'fib','fib_rich','KC1', 'KC2', 'KC3',  'mac','mac rich', 'mast', 'mDC','pDC', 'monocyte', 'neutrophil', 'NK',  'T CD4 mem', 'T CD4 naive', 'T CD8 mem', 'T CD8 naive', 'Treg')
 
-plotMetaDataHeatmap(gem, selected_feats = topgini_genes,
-                    custom_feat_order = unique(markers$feats),
+# Create a vector of your additional markers
+additional_markers <- unique(c("IL7R","LTB","CD4","CD3D","CD3G","CD4","CCR7","IL7R","NOSIP","IL7R","CD4","ITGB1","LTB","AQP3","IL32","IL7R","CCL5","FYB1","GZMK","IL32","GZMA","KLRB1","LTB","AQP3","CD8B","CD8A","CD3D","HCST","CD3G","LINC02446","CTSW","CD3E","CD8B","S100B","CCR7", "NOSIP","LINC02446", "CD8A", "CD8B", "ANXA1","CD8A", "KRT1", "LINC02446" ,"YBX3", "IL7R","CCL5", "GZMH", "CD8A", "NKG7", "GZMK", "CST7", "CD8B","FOXP3", "CD4",   "IL2RA" ,"TIGIT", "CTLA4", "CD79A",    "MS4A1",    "CD74",     "HLA-DQA1", "IGHM"))  # add your desired markers
+
+# Combine with topgini_genes
+all_markers <- unique(c(topgini_genes, additional_markers))
+
+# Use the combined markers in the plot
+# Create combined feature order
+combined_feat_order <- unique(c(unique(markers$feats), additional_markers))
+
+# Use the combined markers in the plot
+plotMetaDataHeatmap(gem_nomix, 
+                    selected_feats = all_markers,
+                    custom_feat_order = combined_feat_order,  # Updated this line
                     custom_cluster_order = cluster_order,
-                    metadata_cols = c('cell_types'), x_text_size = 10, y_text_size = 10,
+                    metadata_cols = c('cell_types'), 
+                    x_text_size = 10, 
+                    y_text_size = 10,
                     save_plot = TRUE,
                     return_plot = TRUE,
                     show_plot = TRUE,
-                    save_param = list(save_folder = 'niche_plots/', # Create subdirectory
-                           save_name = 'Fig2D_heatmap_gini_top2_inf_celltypes_gem',
+                    save_param = list(save_folder = 'niche_plots/',
+                           save_name = 'heatmap_gini_additional_markers_modified_Fig2D',  # Updated name
                            save_format = 'pdf',
                            units = 'in'))
 
 
-# plot patient wise cell type cell number data Extended data fig 3g 
+# plot patient wise cell type cell number data Supplemental Figure 3B 
 cell_metadata<- pDataDT(gem)
 table(cell_metadata$patient_id, cell_metadata$cell_type)
 
@@ -153,6 +167,7 @@ table(cell_metadata$patient_id, cell_metadata$cell_type)
 
 ```{r visualise gem}
 #fig 2c
+#in figure 2c, mac rich is replaced by mac2 and igg rich is replaced by plasmablast2, fib rich by fib2
 
 plotUMAP(gobject = gem,
          cell_color = 'cell_types', show_center_label =T,cell_color_code=c("mac rich"="#E7298A", "mac"= "#FF7F00","monocyte"= "#FFC0CB", "pDC"= "#FB8072","neutrophil"= "#800000","mDC"= "#A65628", "mast"= "#FFD700", "mDC"= "#A65628","Igg rich"= "#1B9E77", "B-Cell"= "#006400", "plasmablast"= "#00FF00","fib_rich"= "#7FFFD4", "fib"= "#00FFFF","KC1"= "#F5DEB3", "KC2"= "#F0F8FF", "KC3"= "#FFE4E1","endothelial"= "#E41A1C", "Treg"= "#6495ED",  "NK"= "#00BFFF",   "T CD4 mem"= "#8B008B", "T CD4 naive"= "#DDA0DD", "T CD8 mem"= "#000080", "T CD8 naive"= "#ADD8E6"),
@@ -183,7 +198,7 @@ spatPlot2D(gobject = P3, cell_color = 'clusterf',point_size = 1.0, select_cell_g
 ```{r plotting different cell populations onto space}
 #table(gem@cell_metadata[["rna"]][["cluster"]])
 
-#Supplementary Figure 5C-H
+#Supplementary Figure 3C-H
 # fetch metadata from gem
 cell_metadata = pDataDT(gem)
 
