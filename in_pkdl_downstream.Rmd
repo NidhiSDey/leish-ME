@@ -51,11 +51,11 @@ PKDL_merged <- readRDS(paste0(save_path, "lesion_PKDL_merged.Rds"))
 ```{r}
 DefaultAssay(PKDL_merged)<- "SCT"
 
-#Figure 5f, extended data fig. 8g and 9e-f
+#Figure 5h, k and m, Supplemental fig. 6e
 gene_list <- c("IDO1", "CD274", "CXCL9","IL32")
 for (gene in gene_list){
   #feature <- top.features[spatial_feature]
-  pdf(paste0(save_path, "Fig5f_Ext_Data_Fig9e-f_8g_Spatial_feature_", gene, ".pdf"))
+  pdf(paste0(save_path, "Fig7f_Supple_Fig6e_Spatial_feature_", gene, ".pdf"))
     x<-SpatialFeaturePlot(PKDL_merged, features = gene, alpha = c(0, 0), crop = TRUE, pt.size.factor = 3)
     y<-SpatialFeaturePlot(PKDL_merged, features = gene, alpha = c(5, 5), crop = T, pt.size.factor = 3, min.cutoff = 0)
   dev.off()
@@ -67,11 +67,11 @@ for (gene in gene_list){
 
 ##### Fig.7h
 
-pdf(paste0(save_path, "Fig7h_pdl1_ido1_overall_scatter.pdf"), height = 5, width=5)
+pdf(paste0(save_path, "Fig7h_pkdl_pdl1_ido1_overall_scatter.pdf"), height = 5, width=5)
  FeatureScatter(PKDL_merged, feature1 = "IDO1", feature2 = "CD274", cols = rep("black",10), jitter=3) + NoLegend() + geom_vline(aes(xintercept = 0.2), col = "red", size = 0.3) + geom_hline(aes(yintercept = 0.2), col = "red", size = 0.3)
 dev.off()
 
-#### Extended Data fig. 7j 
+#### fig. 7f 
 
 PKDL_merged$ido1pdl1 <- "rest_of_the_spots"
 PKDL_merged$spot_id<-rownames(PKDL_merged@meta.data)
@@ -88,7 +88,7 @@ PKDL_merged@meta.data$ido1pdl1[PKDL_merged@meta.data$spot_id %in% pdl1_spots] <-
 PKDL_merged<- SetIdent(object = PKDL_merged, value = "ido1pdl1")
 
 
-pdf(paste0(save_path, "Fig7j_Ext_Data_Fig8j_ido1_pdl1_spatialplot_ido1dot5pdl1dot1.pdf"), height = 5, width=5)  
+pdf(paste0(save_path, "Fig7f_supple_fig6e_ido1_pdl1_spatialplot_ido1dot5pdl1dot1.pdf"), height = 5, width=5)  
   x<- SpatialPlot(PKDL_merged, group.by= "ido1pdl1", image.alpha = 0.3, crop = T, pt.size.factor = 3, cols = c("ido1_spots"="#6495ED","ido1_pdl1_spots" = "#FF1493","pdl1_spots"= "#FFA500","rest_of_the_spots" = "#E6E6FA"))
  for(i in 1:2){
     #fig1<-
@@ -99,7 +99,7 @@ pdf(paste0(save_path, "Fig7j_Ext_Data_Fig8j_ido1_pdl1_spatialplot_ido1dot5pdl1do
 
 
 
-# Fig5k
+# Fig7k
  PKDL_merged<-PrepSCTFindMarkers(PKDL_merged)
 ido1pdl1markergenes<- FindAllMarkers(PKDL_merged,assay = "SCT",min.pct = 0.2,logfc.threshold = 0.2)
 #sig_ido1pdl1markergenes<- subset(ido1pdl1markergenes, subset = p_val_adj < 0.01)
@@ -154,7 +154,7 @@ write.csv(sig_ido1pdl1markergenes, paste0(save_path, "ido1pdl1markergenes_padj0.
 
 ### Genes filtered in the above commented code are hard coded in the following lines for brevity.
 
-pdf(paste0(save_path, "Fig5k_pkdl_skin_merged_IDO1PDL1_dot_plots_figure5_de.pdf"),7,6)
+pdf(paste0(save_path, "Fig7k_pkdl_skin_merged_IDO1PDL1_dot_plots_de.pdf"),7,6)
   x<-DotPlot(PKDL_merged, features = c("CCL4", "CCL2", "CCL5","CXCL10", "CXCL11","CXCL13", "CXCL9", "CXCR4", "IL10RA","IL2RG", "IL32", "IFNG","TGFBRAP1", "TNFAIP2","TNFRSF9","LAG3","CD40", "LILRB4"), group.by = "ido1pdl1", scale = TRUE, scale.min = 0, scale.max =100, col.min = 0, col.max = 1.5) + RotatedAxis() + coord_flip() + theme(axis.title.x=element_blank(), axis.title.y=element_blank())
   figure5 <- ggarrange(x,ncol = 1,nrow = 1)
   print(figure5)
