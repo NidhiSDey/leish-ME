@@ -212,24 +212,17 @@ loaded via a namespace (and not attached):
 |1E|sl2_cl_downstream.Rmd|
 |1F|sl2_cl_downstream.Rmd|
 |1G|sl2_cl_downstream.Rmd|
-|1H|sl2_cl_downstream.Rmd|
-|1I|sl2_cl_downstream.Rmd|
-|1J|sl2_cl_downstream.Rmd; plotted in GraphPad|
-|1K|sl2_cl_cell2location.Rmd|
-|1L|sl2_cl_cell2location.Rmd; plotted in GraphPad|
+|1H|sl2_cl_downstream.Rmd; plotted in GraphPad|
+|1I|sl2_cl_cell2location.Rmd; plotted in GraphPad|
 |Supp. 1A|Images|
 |Supp. 1B|Images|
 |Supp. 1C|sl2_cl_downstream.Rmd|
 |Supp. 1D|sl2_cl_downstream.Rmd|
 |Supp. 1E-K|sl2_cl_downstream.Rmd|
 |Supp. 2A|sl2_cl_downstream.Rmd|
-|Supp. 2B|sl2_cl_downstream.Rmd|
-|Supp. 2C-L|sl2_cl_cell2location.Rmd|
+|Supp. 2B-L|sl2_cl_cell2location.Rmd|
 |2A|Image|
-|2A|giotto_sl2_config.Rmd|
-|2B|giotto_sl2_config.Rmd|
-|2C|giotto_sl2_config.Rmd|
-|2D|giotto_sl2_configcosmx_mac_sub_clustered_downstream.Rmd|
+|2A-D|giotto_sl2_config.Rmd|
 |2E|cosmx_spatial_plots.Rmd|
 |2F|cosmx_mac_sub_clustered_downstream.Rmd|
 |2G|cosmx_mac_sub_clustered_downstream.Rmd|
@@ -246,6 +239,7 @@ loaded via a namespace (and not attached):
 |3L|sl2_cl_cell2location.Rmd|
 |3M-O|sl2_cl_downstream.Rmd|
 |Supp. 4A|sl2_cl_downstream.Rmd|
+|Supp. 2B|sl2_cl_cell2location.Rmd|
 |4A|giotto_sl2_downstream.Rmd|
 |4B|giotto_sl2_downstream.Rmd|
 |4C|giotto_sl2_downstream.Rmd. Analysed in Excel, plotted in GraphPad|
@@ -257,6 +251,7 @@ loaded via a namespace (and not attached):
 |6A-F|giotto_sl2_downstream.Rmd; Graphed in GraphPad|
 |6G-I|giotto_sl2_downstream.Rmd|
 |6J|Analysed in excel and graphed in GraphPad|
+|Supp. 5A|giotto_sl2_downstream.Rmd|
 |7A-D|images|
 |7E|br_cl_downstream.Rmd|
 |7F|in_pkdl_downstream.Rmd|
@@ -267,17 +262,16 @@ loaded via a namespace (and not attached):
 |7K|in_pkdl_downstream.Rmd|
 |7L|br_cl_downstream.Rmd|
 |7M|Data from br_cl_downstream.Rmd,in_pkdl_downstream.Rmd and sl2_cl_downstream.Rmd. Plotted in Venny.|
-|Supp. 5A-D|Images|
-|Supp. 5E|in_pkdl_downstream.Rmd|
-|Supp. 5F|in_pkdl_downstream.Rmd|
-|Ext. 8h|in_pkdl_downstream.Rmd|
+|Supp. 6A-D|Images|
+|Supp. 6E|in_pkdl_downstream.Rmd|
+|Supp. 6F|br_cl_downstream.Rmd|
 |8A-C|Flow data analysed in FlowJo and graphed in FlowJo and GraphPad|
-|7D-O|Images; using data from source files plotted in R|
+|8D-O|Images; using data from source files plotted in R|
 
 ###Figure reproduction - Please use option 2 until publication
 Option1 : Start from scratch using raw 10x files (available post publication)
 
-    Download all samples/10x files from GSMXXXX into source/'Visium_slide_name'/
+    Download all samples/10x files from GSE290027. into source/'Visium_slide_name'/
     Start with sl2_cl_integration.Rmd, in_pkdl_integration.Rmd  or br_cl_integration.Rmd 
 
 Option2 : Start from prepared Rds containing primary clustering analysis - 10.5281/zenodo.10402126
