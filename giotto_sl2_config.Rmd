@@ -117,6 +117,13 @@ plotUMAP(gobject = gem,
 
 ### differential expression
 # Fig. 2D
+## Azimuth Human PBMC atlas (Hao et al., Cell 2021), which is based on CITEseq data was used to include comprehensive gene sets #for cell types in Figure 2D and text, where applicable (lines 97, 147-150, 153-4, 190-92). The following markers more #definitively identify T cell subsets as:
+#CD4+ naive T cells (CD3D/G+, CD4+, CCR7+, IL7Rlow)
+#CD4+ memory T cells (CD3D/G+, CD4+, IL7Rhigh, CCR7neg, KLRB1+)
+#CD8+ naive T cells (CD3D/E+, CD8A/B+, IL7R+, SIGIRR+, CCR7+)
+#CD8+ memory T cells (CD3D/E+, CD8A/B+, CST7+, NKG7+, GZMH+, GZMA+, GZMK+, CCL5+)
+#Tregs (CD3D/G+, FOXP3+, CD4+, IL2RA+, TIGIT+, CTLA4+)
+#these additional markers were then included in the heatmap in Fig.2D
 # Gini
 markers = findMarkers_one_vs_all(gobject = gem,
                                  method = 'gini',
